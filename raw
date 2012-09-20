@@ -1,0 +1,12 @@
+<?php
+
+require 'le-servique.php';
+
+if( preg_match( '#^/([^/]+)/?(.*)$#', $_SERVER['PATH_INFO'], $bif ) ) {
+	server_la_contenteaux( $bif[1], $bif[2] );
+} else {
+	header("HTTP/1.0 404 Unrecognised URN/path");
+	header("Content-Type: text/plain");
+	echo "Expected a URL of the form .../raw/<urn>/<filename>\n";
+	echo "But got {$_SERVER['PATH_INFO']}\n";
+}
