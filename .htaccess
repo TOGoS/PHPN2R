@@ -1,6 +1,0 @@
-<Files N2R>
-       SetHandler php5-cgi-script
-</Files>
-<Files raw>
-       SetHandler php5-cgi-script
-</Files>
