@@ -50,6 +50,9 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		}
 		if( $ct == null ) $ct = 'application/octet-stream';
 		
+		if( is_int($size) ) {
+			header("Content-Length: $size");
+		}
 		header("Content-Type: $ct");
 		header('Cache-Control: cache');
 		
