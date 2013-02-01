@@ -1,6 +1,6 @@
 <?php
 
-class Le_Repo {
+class PHPN2R_Repository {
 	protected $dataDir;
 	
 	public function __construct( $dataDir ) {
@@ -32,34 +32,52 @@ class Le_Repo {
 	}
 }
 
-function server_la_contenteaux( $urn, $filenameHint ) {
-	$repo = new Le_Repo( "/home/stevens/datastore/ccouch/data" );
-	if( ($file = $repo->findFile($urn)) ) {
-		$size = filesize($file);
-		
-		$ct = null;
-		$enc = null;
+class PHPN2R_Server {
+	protected $repo;
+	
+	public function __construct( $repo ) {
+		$this->repo = $repo;
+	}
+	
+	protected function guessFileType( $file, $filenameHint ) {
 		if( preg_match('/.ogg$/',$filenameHint) ) {
 			// finfo will report the skeleton type, application/ogg :(
-			$ct = 'audio/ogg';
+			return 'audio/ogg';
 		} else {
 			if( $finfo = finfo_open(FILEINFO_MIME_TYPE|FILEINFO_MIME_ENCODING) ) {
 				$ct = finfo_file( $finfo, $file );
 				finfo_close($finfo);
 			}
+			return $ct;
 		}
-		if( $ct == null ) $ct = 'application/octet-stream';
-		
-		if( is_int($size) ) {
-			header("Content-Length: $size");
-		}
-		header("Content-Type: $ct");
-		header('Cache-Control: cache');
-		
-		readfile($file);
-	} else {
-		header('HTTP/1.0 404 Blob not found');
-		header('Content-Type: text/plain');
-		echo "I coulnd't find $urn, bro.\n";
 	}
+	
+	public function serveBlob( $urn, $filenameHint ) {
+		if( ($file = $this->repo->findFile($urn)) ) {
+			$size = filesize($file);
+			
+			$ct = null;
+			$enc = null;
+			$ct = $this->guessFileType( $file, $filenameHint );
+			if( $ct == null ) $ct = 'application/octet-stream';
+			
+			if( is_int($size) ) {
+				header("Content-Length: $size");
+			}
+			header("Content-Type: $ct");
+			header('Cache-Control: cache');
+			
+			readfile($file);
+		} else {
+			header('HTTP/1.0 404 Blob not found');
+			header('Content-Type: text/plain');
+			echo "I coulnd't find $urn, bro.\n";
+		}
+	}
+}
+
+function server_la_contenteaux( $urn, $filenameHint ) {
+	$repo = new PHPN2R_Repository( "/home/stevens/datastore/ccouch/data" );
+	$serv = new PHPN2R_Server( $repo );
+	$serv->serveBlob( $urn, $filenameHint );
 }
