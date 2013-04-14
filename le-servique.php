@@ -43,12 +43,12 @@ class PHPN2R_Server {
 		if( preg_match('/.ogg$/',$filenameHint) ) {
 			// finfo will report the skeleton type, application/ogg :(
 			return 'audio/ogg';
-		} else {
-			if( $finfo = finfo_open(FILEINFO_MIME_TYPE|FILEINFO_MIME_ENCODING) ) {
-				$ct = finfo_file( $finfo, $file );
-				finfo_close($finfo);
-			}
+		} else if( function_exists('finfo_open') and $finfo = finfo_open(FILEINFO_MIME_TYPE|FILEINFO_MIME_ENCODING) ) {
+			$ct = finfo_file( $finfo, $file );
+			finfo_close($finfo);
 			return $ct;
+		} else if( preg_match('/.html?$/i',$filenameHint) ) {
+			return 'text/html';
 		}
 	}
 	
