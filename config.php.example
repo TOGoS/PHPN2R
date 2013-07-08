@@ -1,0 +1,7 @@
+<?php
+
+return array(
+	'repositories' => array(
+		'pvps1' => '/home/someone/.ccouch'	
+	)
+);

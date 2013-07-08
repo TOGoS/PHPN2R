@@ -77,7 +77,16 @@ class PHPN2R_Server {
 }
 
 function server_la_contenteaux( $urn, $filenameHint ) {
-	$repo = new PHPN2R_Repository( "/home/stevens/datastore/ccouch/data" );
+	$config = require('config.php');
+	$repo = null;
+	foreach( $config['repositories'] as $repoPath ) {
+		$repo = new PHPN2R_Repository( "$repoPath/data" );
+	}
+	if( $repo === null ) {
+	    header('HTTP/1.0 No repositories configured');
+	    header('Content-Type: text/plain');
+	    echo "No repositories configured!\n";
+	}
 	$serv = new PHPN2R_Server( $repo );
 	$serv->serveBlob( $urn, $filenameHint );
 }
