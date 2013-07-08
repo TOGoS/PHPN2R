@@ -1,9 +1,6 @@
 # This is an ~example~ .htaccess file.
 # You may need to do something different to get Apache to run PHP on your
 # scripts, e.g. "SetHandler application/x-httpd-php"
-<Files N2R>
-       SetHandler php5-cgi-script
-</Files>
-<Files raw>
-       SetHandler php5-cgi-script
-</Files>
+<FilesMatch "^(raw|N2R)$">
+	SetHandler php5-cgi-script
+</FilesMatch>
