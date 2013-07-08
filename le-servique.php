@@ -52,7 +52,7 @@ class PHPN2R_Server {
 		}
 	}
 	
-	public function serveBlob( $urn, $filenameHint ) {
+	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
 		if( ($file = $this->repo->findFile($urn)) ) {
 			$size = filesize($file);
 			
@@ -67,21 +67,34 @@ class PHPN2R_Server {
 			header("Content-Type: $ct");
 			header('Cache-Control: cache');
 			
-			readfile($file);
+			if( $sendContent ) {
+				readfile($file);
+			}
 		} else {
 			header('HTTP/1.0 404 Blob not found');
 			header('Content-Type: text/plain');
-			echo "I coulnd't find $urn, bro.\n";
+			if( $sendContent ) {
+				echo "I coulnd't find $urn, bro.\n";
+			}
 		}
+	}
+	
+	public function serveBlob( $urn, $filenameHint ) {
+		$this->_serveBlob( $urn, $filenameHint, true );
+	}
+
+	public function serveBlobHeaders( $urn, $filenameHint ) {
+		$this->_serveBlob( $urn, $filenameHint, false );
 	}
 }
 
 function server_la_contenteaux( $urn, $filenameHint ) {
 	$config = include('config.php');
 	if( $config === false ) {
-		header('HTTP/1.0 No config.php present');
+		header('HTTP/1.0 500 No config.php present');
 		header('Content-Type: text/plain');
 		echo "'config.php' does not exist or is returning false.\n";
+		echo "\n";
 		echo "Copy config.php.example to config.php and fix.\n";
 		exit;
 	}
@@ -90,11 +103,31 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		$repo = new PHPN2R_Repository( "$repoPath/data" );
 	}
 	if( $repo === null ) {
-		header('HTTP/1.0 No repositories configured');
+		header('HTTP/1.0 500 No repositories configured');
 		header('Content-Type: text/plain');
 		echo "No repositories configured!\n";
 		exit;
 	}
+	
+	$availableMethods = array("GET", "HEAD", "OPTIONS");
+	
 	$serv = new PHPN2R_Server( $repo );
-	$serv->serveBlob( $urn, $filenameHint );
+	switch( ($meth = $_SERVER['REQUEST_METHOD']) ) {
+	case 'GET':
+		$serv->serveBlob( $urn, $filenameHint );
+		return;
+	case 'HEAD':
+		$serv->serveBlobHeaders( $urn, $filenameHint );
+		return;
+	case 'OPTIONS':
+		header('HTTP/1.0 200 No repositories configured');
+		header('Content-Type: text/plain');
+		echo implode("\n", $availableMethods), "\n";
+		return;
+	default:
+		header('HTTP/1.0 405 Method not supported');
+		echo "Method '$meth' is not supported by this service.\n";
+		echo "\n";
+		echo "Allowed methods: ".implode(', ', $availableMethods);
+	}
 }
