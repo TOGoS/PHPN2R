@@ -2,6 +2,6 @@
 
 return array(
 	'repositories' => array(
-		'pvps1' => '/home/someone/.ccouch'	
+		'some-repository' => '/home/someone/.ccouch'	
 	)
 );

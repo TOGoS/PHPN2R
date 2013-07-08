@@ -77,15 +77,23 @@ class PHPN2R_Server {
 }
 
 function server_la_contenteaux( $urn, $filenameHint ) {
-	$config = require('config.php');
+	$config = include('config.php');
+	if( $config === false ) {
+		header('HTTP/1.0 No config.php present');
+		header('Content-Type: text/plain');
+		echo "'config.php' does not exist or is returning false.\n";
+		echo "Copy config.php.example to config.php and fix.\n";
+		exit;
+	}
 	$repo = null;
 	foreach( $config['repositories'] as $repoPath ) {
 		$repo = new PHPN2R_Repository( "$repoPath/data" );
 	}
 	if( $repo === null ) {
-	    header('HTTP/1.0 No repositories configured');
-	    header('Content-Type: text/plain');
-	    echo "No repositories configured!\n";
+		header('HTTP/1.0 No repositories configured');
+		header('Content-Type: text/plain');
+		echo "No repositories configured!\n";
+		exit;
 	}
 	$serv = new PHPN2R_Server( $repo );
 	$serv->serveBlob( $urn, $filenameHint );
