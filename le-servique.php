@@ -58,6 +58,8 @@ class PHPN2R_Server {
 		}
 	}
 	
+	const HTTP_DATE_FORMAT = "D, d M Y H:i:s e";
+	
 	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
 		if( ($file = $this->repo->findFile($urn)) ) {
 			$size = filesize($file);
@@ -66,13 +68,19 @@ class PHPN2R_Server {
 			$enc = null;
 			$ct = $this->guessFileType( $file, $filenameHint );
 			if( $ct == null ) $ct = 'application/octet-stream';
-			
-			if( is_int($size) ) {
-				header("Content-Length: $size");
+
+			if( preg_match( '/^urn:(?:sha1|bitprint):([0-9A-Z]{32})/', $urn, $bif ) ) {
+				$etag = $bif[1];
+			} else {
+				$etag = null;
 			}
-			header("Content-Type: $ct");
+			
+			header('Date: '.gmdate(self::HTTP_DATE_FORMAT, time()));
+			header('Expires: '.gmdate(self::HTTP_DATE_FORMAT, time() + (3600*24*365)));
 			header('Cache-Control: public');
-			header('Expires: '.gmdate(DATE_RFC1123, time() + (3600*24*365)));
+			if( $etag ) header("ETag: \"$etag\"");
+			if( is_int($size) ) header("Content-Length: $size");
+			header("Content-Type: $ct");
 			
 			if( $sendContent ) {
 				readfile($file);
