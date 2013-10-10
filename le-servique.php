@@ -65,7 +65,8 @@ class PHPN2R_Server {
 				header("Content-Length: $size");
 			}
 			header("Content-Type: $ct");
-			header('Cache-Control: cache');
+			header('Cache-Control: public');
+			header('Expires: '.gmdate(DATE_RFC1123, time() + (3600*24*365)));
 			
 			if( $sendContent ) {
 				readfile($file);
