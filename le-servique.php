@@ -95,7 +95,25 @@ class PHPN2R_Server {
 	}
 }
 
+function server_la_php_error( $errlev, $errstr, $errfile=null, $errline=null ) {
+	if( ($errlev & error_reporting()) == 0 ) return;
+	if( !headers_sent() ) {
+		header('HTTP/1.0 500 Erreaux');
+		header('Content-Type: text/plain');
+	}
+	echo "HTTP 500!  Server error!\n";
+	echo "Error (level $errlev): $errstr\n";
+	if( $errfile or $errline ) {
+		echo "\n";
+		echo "at $errfile:$errline\n";
+	}
+	exit;
+}
+
 function server_la_contenteaux( $urn, $filenameHint ) {
+	ini_set('html_errors', false);
+	set_error_handler('server_la_php_error');
+	
 	$config = include('config.php');
 	if( $config === false ) {
 		header('HTTP/1.0 500 No config.php present');
@@ -133,8 +151,9 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		return;
 	default:
 		header('HTTP/1.0 405 Method not supported');
+		header('Content-Type: text/plain');
 		echo "Method '$meth' is not supported by this service.\n";
 		echo "\n";
-		echo "Allowed methods: ".implode(', ', $availableMethods);
+		echo "Allowed methods: ".implode(', ', $availableMethods), "\n";
 	}
 }
