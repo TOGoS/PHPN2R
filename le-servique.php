@@ -49,6 +49,12 @@ class PHPN2R_Server {
 			return $ct;
 		} else if( preg_match('/.html?$/i',$filenameHint) ) {
 			return 'text/html';
+		} else if( preg_match('/.jpe?g$/i',$filenameHint) ) {
+			return 'image/jpeg';
+		} else if( preg_match('/.png$/i',$filenameHint) ) {
+			return 'image/png';
+		} else {
+			return null;
 		}
 	}
 	
