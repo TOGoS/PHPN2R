@@ -49,6 +49,12 @@ class PHPN2R_Server {
 			return $ct;
 		} else if( preg_match('/.html?$/i',$filenameHint) ) {
 			return 'text/html';
+		} else if( preg_match('/.jpe?g$/i',$filenameHint) ) {
+			return 'image/jpeg';
+		} else if( preg_match('/.png$/i',$filenameHint) ) {
+			return 'image/png';
+		} else {
+			return null;
 		}
 	}
 	
@@ -60,6 +66,8 @@ class PHPN2R_Server {
 		}
 		return null;
 	}
+
+	const HTTP_DATE_FORMAT = "D, d M Y H:i:s e";
 	
 	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
 		if( ($file = $this->findFile($urn)) ) {
@@ -69,12 +77,19 @@ class PHPN2R_Server {
 			$enc = null;
 			$ct = $this->guessFileType( $file, $filenameHint );
 			if( $ct == null ) $ct = 'application/octet-stream';
-			
-			if( is_int($size) ) {
-				header("Content-Length: $size");
+
+			if( preg_match( '/^urn:(?:sha1|bitprint):([0-9A-Z]{32})/', $urn, $bif ) ) {
+				$etag = $bif[1];
+			} else {
+				$etag = null;
 			}
+			
+			header('Date: '.gmdate(self::HTTP_DATE_FORMAT, time()));
+			header('Expires: '.gmdate(self::HTTP_DATE_FORMAT, time() + (3600*24*365)));
+			header('Cache-Control: public');
+			if( $etag ) header("ETag: \"$etag\"");
+			if( is_int($size) ) header("Content-Length: $size");
 			header("Content-Type: $ct");
-			header('Cache-Control: cache');
 			
 			if( $sendContent ) {
 				readfile($file);
@@ -97,7 +112,25 @@ class PHPN2R_Server {
 	}
 }
 
+function server_la_php_error( $errlev, $errstr, $errfile=null, $errline=null ) {
+	if( ($errlev & error_reporting()) == 0 ) return;
+	if( !headers_sent() ) {
+		header('HTTP/1.0 500 Erreaux');
+		header('Content-Type: text/plain');
+	}
+	echo "HTTP 500!  Server error!\n";
+	echo "Error (level $errlev): $errstr\n";
+	if( $errfile or $errline ) {
+		echo "\n";
+		echo "at $errfile:$errline\n";
+	}
+	exit;
+}
+
 function server_la_contenteaux( $urn, $filenameHint ) {
+	ini_set('html_errors', false);
+	set_error_handler('server_la_php_error');
+	
 	$config = include('config.php');
 	if( $config === false ) {
 		header('HTTP/1.0 500 No config.php present');
@@ -135,8 +168,9 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		return;
 	default:
 		header('HTTP/1.0 405 Method not supported');
+		header('Content-Type: text/plain');
 		echo "Method '$meth' is not supported by this service.\n";
 		echo "\n";
-		echo "Allowed methods: ".implode(', ', $availableMethods);
+		echo "Allowed methods: ".implode(', ', $availableMethods), "\n";
 	}
 }
