@@ -33,10 +33,10 @@ class PHPN2R_Repository {
 }
 
 class PHPN2R_Server {
-	protected $repo;
+	protected $repos;
 	
-	public function __construct( $repo ) {
-		$this->repo = $repo;
+	public function __construct( $repos ) {
+		$this->repos = $repos;
 	}
 	
 	protected function guessFileType( $file, $filenameHint ) {
@@ -52,8 +52,17 @@ class PHPN2R_Server {
 		}
 	}
 	
+	protected function findFile($urn) {
+		foreach( $this->repos as $repo ) {
+			if( ($file = $repo->findFile($urn)) ) {
+				return $file;
+			}
+		}
+		return null;
+	}
+	
 	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
-		if( ($file = $this->repo->findFile($urn)) ) {
+		if( ($file = $this->findFile($urn)) ) {
 			$size = filesize($file);
 			
 			$ct = null;
@@ -98,12 +107,12 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		echo "Copy config.php.example to config.php and fix.\n";
 		exit;
 	}
-	$repo = null;
+	$repos = array();
 	foreach( $config['repositories'] as $repoPath ) {
-		$repo = new PHPN2R_Repository( "$repoPath/data" );
+		$repos[] = new PHPN2R_Repository( "$repoPath/data" );
 	}
-	if( $repo === null ) {
-		header('HTTP/1.0 500 No repositories configured');
+	if( count($repos) == 0 ) {
+		header('HTTP/1.0 404 No repositories configured');
 		header('Content-Type: text/plain');
 		echo "No repositories configured!\n";
 		exit;
@@ -111,7 +120,7 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 	
 	$availableMethods = array("GET", "HEAD", "OPTIONS");
 	
-	$serv = new PHPN2R_Server( $repo );
+	$serv = new PHPN2R_Server( $repos );
 	switch( ($meth = $_SERVER['REQUEST_METHOD']) ) {
 	case 'GET':
 		$serv->serveBlob( $urn, $filenameHint );
