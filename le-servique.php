@@ -20,6 +20,13 @@ class PHPN2R_Repository {
 		
 		$first2 = substr($basename,0,2);
 		
+		if( !is_dir($this->dataDir) ) {
+			// This may be due to something not being mounted,
+			// or it may be a configuration error.
+			// It might be good to log this somewhere,
+			// but for now we'll just let it slide.
+			return null;
+		}
 		$dir = opendir( $this->dataDir );
 		$fil = null;
 		while( $dir !== false and ($en = readdir($dir)) !== false ) {
