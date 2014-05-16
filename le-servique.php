@@ -47,9 +47,9 @@ class PHPN2R_LinkMaker {
 	}
 	public function componentUrl( $comp, $urn, $filenameHint=null ) {
 		if( $comp == 'raw' and $filenameHint === null ) {
-			return $this->rp.'/N2R?'.$urn;
+			return $this->rp.'N2R?'.$urn;
 		} else {
-			return $this->rp.'/'.$comp.'/'.$urn.($filenameHint === null ? '' : '/'.$filenameHint);
+			return $this->rp.$comp.'/'.$urn.($filenameHint === null ? '' : '/'.$filenameHint);
 		}
 	}
 	public function htmlLink( $url, $text ) {

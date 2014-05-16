@@ -2,7 +2,7 @@
 
 require 'le-servique.php';
 
-if( preg_match( '#^/([^/]+)/?(.*)$#', $_SERVER['PATH_INFO'], $bif ) ) {
+if( preg_match( '#^ / ([^/]+) (?:/ (.*))? $#x', $_SERVER['PATH_INFO'], $bif ) ) {
 	server_la_brows( $bif[1], $bif[2], $bif[2] === null ? '../' : '../../' );
 } else {
 	header("HTTP/1.0 404 Unrecognised URN/path");
