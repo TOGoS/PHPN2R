@@ -57,7 +57,7 @@ class PHPN2R_LinkMaker {
 	}
 	public function htmlLinkForUrn( $urn, $filenameHint, $text ) {
 		if( $text === null ) $text = $urn;
-		if( preg_match('/^((?:x-)?(?:rdf-)?subject(?:-of)?):(.*)$/',$urn,$bif) ) {
+		if( preg_match('/^(x-parse-rdf|(?:x-)?(?:rdf-)?subject(?:-of)?):(.*)$/',$urn,$bif) ) {
 			$subjectScheme = $bif[1];
 			$blobUrn = $bif[2];
 			if( $text == $urn ) {
@@ -184,7 +184,7 @@ class PHPN2R_Server {
 				$content = file_get_contents($file);
 				$contentHtml = htmlspecialchars($content);
 				$contentHtml = preg_replace_callback(
-					'#(?:urn|(?:(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
+					'#(?:urn|(?:x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
 					array($linkMaker,'urnHtmlLinkReplacementCallback'), $contentHtml
 				);
 				echo "<hr />\n";
