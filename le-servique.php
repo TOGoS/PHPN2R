@@ -26,6 +26,13 @@ class PHPN2R_Repository {
 		
 		$first2 = substr($basename,0,2);
 		
+		if( !is_dir($this->dataDir) ) {
+			// This may be due to something not being mounted,
+			// or it may be a configuration error.
+			// It might be good to log this somewhere,
+			// but for now we'll just let it slide.
+			return null;
+		}
 		$dir = opendir( $this->dataDir );
 		$fil = null;
 		while( $dir !== false and ($en = readdir($dir)) !== false ) {
@@ -39,10 +46,10 @@ class PHPN2R_Repository {
 }
 
 class PHPN2R_Server {
-	protected $repo;
+	protected $repos;
 	
-	public function __construct( $repo ) {
-		$this->repo = $repo;
+	public function __construct( $repos ) {
+		$this->repos = $repos;
 	}
 	
 	protected function guessFileType( $file, $filenameHint ) {
@@ -64,10 +71,19 @@ class PHPN2R_Server {
 		}
 	}
 	
+	protected function findFile($urn) {
+		foreach( $this->repos as $repo ) {
+			if( ($file = $repo->findFile($urn)) ) {
+				return $file;
+			}
+		}
+		return null;
+	}
+
 	const HTTP_DATE_FORMAT = "D, d M Y H:i:s e";
 	
 	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
-		if( ($file = $this->repo->findFile($urn)) ) {
+		if( ($file = $this->findFile($urn)) ) {
 			$size = filesize($file);
 			
 			$ct = null;
@@ -132,11 +148,11 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		echo "Copy config.php.example to config.php and fix.\n";
 		exit;
 	}
-	$repo = null;
+	$repos = array();
 	foreach( $config['repositories'] as $repoPath ) {
-		$repo = new PHPN2R_Repository( "$repoPath/data" );
+		$repos[] = new PHPN2R_Repository( "$repoPath/data" );
 	}
-	if( $repo === null ) {
+	if( count($repos) == 0 ) {
 		send_error_headers("500 No repositories configured");
 		echo "No repositories configured!\n";
 		exit;
@@ -144,7 +160,7 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 	
 	$availableMethods = array("GET", "HEAD", "OPTIONS");
 	
-	$serv = new PHPN2R_Server( $repo );
+	$serv = new PHPN2R_Server( $repos );
 	switch( ($meth = $_SERVER['REQUEST_METHOD']) ) {
 	case 'GET':
 		$serv->serveBlob( $urn, $filenameHint );
