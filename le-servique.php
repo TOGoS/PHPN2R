@@ -45,6 +45,43 @@ class PHPN2R_Repository {
 	}
 }
 
+class PHPN2R_LinkMaker {
+	/** Root path prefix; relative URI, including trailing slash, to uri-res/ */
+	protected $rp;
+	public function __construct( $rp ) {
+		$this->rp = $rp;
+	}
+	public function componentUrl( $comp, $urn, $filenameHint=null ) {
+		if( $comp == 'raw' and $filenameHint === null ) {
+			return $this->rp.'N2R?'.$urn;
+		} else {
+			return $this->rp.$comp.'/'.$urn.($filenameHint === null ? '' : '/'.$filenameHint);
+		}
+	}
+	public function htmlLink( $url, $text ) {
+		return "<a href=\"".htmlspecialchars($url)."\">".htmlspecialchars($text)."</a>";
+	}
+	public function htmlLinkForUrn( $urn, $filenameHint, $text ) {
+		if( $text === null ) $text = $urn;
+		if( preg_match('/^(x-parse-rdf|(?:x-)?(?:rdf-)?subject(?:-of)?):(.*)$/',$urn,$bif) ) {
+			$subjectScheme = $bif[1];
+			$blobUrn = $bif[2];
+			if( $text == $urn ) {
+				return
+					$this->htmlLink($this->componentUrl('browse', $blobUrn, $filenameHint), $subjectScheme).':'.
+					$this->htmlLinkForUrn($blobUrn, $filenameHint, $blobUrn);
+			} else {
+				return $this->htmlLink($this->componentUrl('browse', $blobUrn, $filenameHint), $text);
+			}
+		} else {
+			return $this->htmlLink($this->componentUrl('raw', $urn, $filenameHint), $text);
+		}
+	}
+	public function urnHtmlLinkReplacementCallback( $matches ) {
+		return $this->htmlLinkForUrn( $matches[0], null, $matches[0] );
+	}
+}
+
 class PHPN2R_Server {
 	protected $repos;
 	
@@ -82,6 +119,13 @@ class PHPN2R_Server {
 
 	const HTTP_DATE_FORMAT = "D, d M Y H:i:s e";
 	
+	protected function serve404( $urn, $filenameHint, $sendContent ) {
+		send_error_headers('404 Blob not found');
+		if( $sendContent ) {
+			echo "I coulnd't find $urn, bro.\n";
+		}
+	}
+	
 	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
 		if( ($file = $this->findFile($urn)) ) {
 			$size = filesize($file);
@@ -108,10 +152,7 @@ class PHPN2R_Server {
 				readfile($file);
 			}
 		} else {
-			send_error_headers("404 Blob not found");
-			if( $sendContent ) {
-				echo "I coulnd't find $urn, bro.\n";
-			}
+			$this->serve404($urn, $filenameHint, $sendContent);
 		}
 	}
 	
@@ -121,6 +162,45 @@ class PHPN2R_Server {
 
 	public function serveBlobHeaders( $urn, $filenameHint ) {
 		$this->_serveBlob( $urn, $filenameHint, false );
+	}
+	
+	public function serveBrowse( $urn, $filenameHint, $sendContent, $rp ) {
+		if( ($file = $this->findFile($urn)) ) {
+			$browseSizeLimit = 1024*1024*10;
+			$blobSize = filesize($file);
+			$tooBig = $blobSize > $browseSizeLimit;
+			
+			echo "<html>\n";
+			echo "<head>\n";
+			$title = ($filenameHint ? "$filenameHint ($urn)" : $urn).' - PHPN2R blob browser';
+			echo "<title>$title</title>\n";
+			echo "</head><body>\n";
+			if( $tooBig ) {
+				echo "<p>This file is too big (> $browseSizeLimit bytes) to analyze.</p>\n"; 
+			}
+			$linkMaker = new PHPN2R_LinkMaker($rp);
+
+			$rawUrl = $rp . ($filenameHint === null ? 'N2R?'.$urn : 'raw/'.$urn.'/'.$filenameHint);
+			$links = array();
+			if($filenameHint) $links[] = $linkMaker->htmlLinkForUrn($urn,$filenameHint,'Raw');
+			$links[] = $linkMaker->htmlLinkForUrn($urn,null,'N2R');
+			echo "<p>$blobSize bytes | ", implode(' | ',$links), "</p>\n";
+			if( !$tooBig ) {
+				$content = file_get_contents($file);
+				$contentHtml = htmlspecialchars($content);
+				$contentHtml = preg_replace_callback(
+					'#(?:urn|(?:x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
+					array($linkMaker,'urnHtmlLinkReplacementCallback'), $contentHtml
+				);
+				echo "<hr />\n";
+				echo "<pre>";
+				echo $contentHtml;
+				echo "</pre>\n";
+			}
+			echo "</body>\n</html>\n";
+		} else {
+			$this->serve404($urn, $filenameHint, $sendContent);
+		}
 	}
 }
 
@@ -136,7 +216,7 @@ function server_la_php_error( $errlev, $errstr, $errfile=null, $errline=null ) {
 	exit;
 }
 
-function server_la_contenteaux( $urn, $filenameHint ) {
+function init_environament() {
 	ini_set('html_errors', false);
 	set_error_handler('server_la_php_error');
 	
@@ -148,6 +228,11 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		echo "Copy config.php.example to config.php and fix.\n";
 		exit;
 	}
+	return $config;
+}
+
+function get_server() {
+	$config = init_environament();
 	$repos = array();
 	foreach( $config['repositories'] as $repoPath ) {
 		$repos[] = new PHPN2R_Repository( "$repoPath/data" );
@@ -157,10 +242,14 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		echo "No repositories configured!\n";
 		exit;
 	}
+	return new PHPN2R_Server( $repos );
+}
+
+function server_la_contenteaux( $urn, $filenameHint ) {
+	$serv = get_server();
 	
 	$availableMethods = array("GET", "HEAD", "OPTIONS");
 	
-	$serv = new PHPN2R_Server( $repos );
 	switch( ($meth = $_SERVER['REQUEST_METHOD']) ) {
 	case 'GET':
 		$serv->serveBlob( $urn, $filenameHint );
@@ -178,4 +267,9 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		echo "\n";
 		echo "Allowed methods: ".implode(', ', $availableMethods), "\n";
 	}
+}
+
+function server_la_brows( $urn, $filenameHint, $rp ) {
+	$serv = get_server();
+	$serv->serveBrowse( $urn, $filenameHint, true, $rp );
 }
