@@ -1,5 +1,11 @@
 <?php
 
+function send_error_headers( $status ) {
+	 header("HTTP/1.0 $status");
+	 header("Cache-Control: no-cache");
+	 header("Content-Type: text/plain");
+}
+
 class PHPN2R_Repository {
 	protected $dataDir;
 	
@@ -86,8 +92,7 @@ class PHPN2R_Server {
 				readfile($file);
 			}
 		} else {
-			header('HTTP/1.0 404 Blob not found');
-			header('Content-Type: text/plain');
+			send_error_headers("404 Blob not found");
 			if( $sendContent ) {
 				echo "I coulnd't find $urn, bro.\n";
 			}
@@ -105,10 +110,7 @@ class PHPN2R_Server {
 
 function server_la_php_error( $errlev, $errstr, $errfile=null, $errline=null ) {
 	if( ($errlev & error_reporting()) == 0 ) return;
-	if( !headers_sent() ) {
-		header('HTTP/1.0 500 Erreaux');
-		header('Content-Type: text/plain');
-	}
+	if( !headers_sent() ) send_error_headers("500 PHP Error");
 	echo "HTTP 500!  Server error!\n";
 	echo "Error (level $errlev): $errstr\n";
 	if( $errfile or $errline ) {
@@ -124,8 +126,7 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 	
 	$config = include('config.php');
 	if( $config === false ) {
-		header('HTTP/1.0 500 No config.php present');
-		header('Content-Type: text/plain');
+		send_error_headers("500 No config.php present");
 		echo "'config.php' does not exist or is returning false.\n";
 		echo "\n";
 		echo "Copy config.php.example to config.php and fix.\n";
@@ -136,8 +137,7 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		$repo = new PHPN2R_Repository( "$repoPath/data" );
 	}
 	if( $repo === null ) {
-		header('HTTP/1.0 500 No repositories configured');
-		header('Content-Type: text/plain');
+		send_error_headers("500 No repositories configured");
 		echo "No repositories configured!\n";
 		exit;
 	}
@@ -153,13 +153,11 @@ function server_la_contenteaux( $urn, $filenameHint ) {
 		$serv->serveBlobHeaders( $urn, $filenameHint );
 		return;
 	case 'OPTIONS':
-		header('HTTP/1.0 200 No repositories configured');
-		header('Content-Type: text/plain');
+		send_error_headers("200 No repositories configured");
 		echo implode("\n", $availableMethods), "\n";
 		return;
 	default:
-		header('HTTP/1.0 405 Method not supported');
-		header('Content-Type: text/plain');
+		send_error_headers("405 Method not supported");
 		echo "Method '$meth' is not supported by this service.\n";
 		echo "\n";
 		echo "Allowed methods: ".implode(', ', $availableMethods), "\n";

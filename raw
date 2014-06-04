@@ -1,5 +1,7 @@
 <?php
 
+ini_set('display_errors','On');
+
 require 'le-servique.php';
 
 if( preg_match( '#^/([^/]+)/?(.*)$#', $_SERVER['PATH_INFO'], $bif ) ) {
