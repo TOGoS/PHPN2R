@@ -1,20 +1,4 @@
 <?php
 
-ini_set('display_errors','On');
-
-require 'le-servique.php';
-
-$pathInfo = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
-
-if( preg_match( '#^ / ([^/]+) (?:/ (.*))? $#x', $pathInfo, $bif ) ) {
-	server_la_brows( $bif[1], $bif[2], $bif[2] === null ? '../' : '../../' );
-} else {
-	header("HTTP/1.0 404 Unrecognised URN/path");
-	header("Content-Type: text/plain");
-	echo "Expected a URL of the form '.../browse/<urn>/<filename>'\n";
-	if( $pathInfo ) {
-		echo "But got '{$pathInfo}'\n";
-	} else {
-		echo "But no path given.\n";
-	}
-}
+$res = require 'setup.php';
+Nife_Util::outputResponse($res->browseFromPathInfo());

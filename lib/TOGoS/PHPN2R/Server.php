@@ -37,11 +37,8 @@ class TOGoS_PHPN2R_Server {
 
 	const HTTP_DATE_FORMAT = "D, d M Y H:i:s e";
 	
-	protected function serve404( $urn, $filenameHint, $sendContent ) {
-		send_error_headers('404 Blob not found');
-		if( $sendContent ) {
-			echo "I coulnd't find $urn, bro.\n";
-		}
+	protected function make404Response( $urn, $filenameHint ) {
+		return Nife_Util::httpResponse("404 Blob not found", "I coulnd't find $urn, bro.\n");
 	}
 	
 	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
@@ -70,7 +67,7 @@ class TOGoS_PHPN2R_Server {
 				readfile($file);
 			}
 		} else {
-			$this->serve404($urn, $filenameHint, $sendContent);
+			return $this->make404Response($urn, $filenameHint);
 		}
 	}
 	
@@ -82,42 +79,63 @@ class TOGoS_PHPN2R_Server {
 		$this->_serveBlob( $urn, $filenameHint, false );
 	}
 	
-	public function serveBrowse( $urn, $filenameHint, $sendContent, $rp ) {
+	public function browse( $urn, $filenameHint, $rp ) {
 		if( ($file = $this->findFile($urn)) ) {
 			$browseSizeLimit = 1024*1024*10;
 			$blobSize = filesize($file);
 			$tooBig = $blobSize > $browseSizeLimit;
-			
-			echo "<html>\n";
-			echo "<head>\n";
-			$title = ($filenameHint ? "$filenameHint ($urn)" : $urn).' - PHPN2R blob browser';
-			echo "<title>$title</title>\n";
-			echo "</head><body>\n";
-			if( $tooBig ) {
-				echo "<p>This file is too big (> $browseSizeLimit bytes) to analyze.</p>\n"; 
-			}
-			$linkMaker = new TOGoS_PHPN2R_LinkMaker($rp);
 
-			$rawUrl = $rp . ($filenameHint === null ? 'N2R?'.$urn : 'raw/'.$urn.'/'.$filenameHint);
-			$links = array();
-			if($filenameHint) $links[] = $linkMaker->htmlLinkForUrn($urn,$filenameHint,'Raw');
-			$links[] = $linkMaker->htmlLinkForUrn($urn,null,'N2R');
-			echo "<p>$blobSize bytes | ", implode(' | ',$links), "</p>\n";
-			if( !$tooBig ) {
+			$linkMaker = new TOGoS_PHPN2R_LinkMaker($rp);
+			$title = ($filenameHint ? "$filenameHint ($urn)" : $urn).' - PHPN2R blob browser';
+
+			if( $tooBig ) {
+				$pageContent = "<p>This file is too big (> $browseSizeLimit bytes) to analyze.</p>\n";
+			} else {
 				$content = file_get_contents($file);
 				$contentHtml = htmlspecialchars($content);
 				$contentHtml = preg_replace_callback(
 					'#(?:urn|(?:x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
 					array($linkMaker,'urnHtmlLinkReplacementCallback'), $contentHtml
 				);
-				echo "<hr />\n";
-				echo "<pre>";
-				echo $contentHtml;
-				echo "</pre>\n";
+				$pageContent =
+					"<hr />\n".
+					"<pre>".
+					$contentHtml.
+					"</pre>\n";
 			}
-			echo "</body>\n</html>\n";
+
+			$rawUrl = $rp . ($filenameHint === null ? 'N2R?'.$urn : 'raw/'.$urn.'/'.$filenameHint);
+			$links = array();
+			if($filenameHint) $links[] = $linkMaker->htmlLinkForUrn($urn,$filenameHint,'Raw');
+			$links[] = $linkMaker->htmlLinkForUrn($urn,null,'N2R');
+			
+			$html =
+				"<html>\n".
+				"<head>\n".
+				"<title>$title</title>\n".
+				"</head><body>\n".
+				"<p>$blobSize bytes | ".implode(' | ',$links)."</p>\n".
+				$pageContent.
+				"</body>\n</html>\n";
+			
+			return Nife_Util::httpResponse(200, $html, "text/html; charset=utf-8");
 		} else {
-			$this->serve404($urn, $filenameHint, $sendContent);
+			return $this->make404Response($urn, $filenameHint);
+		}
+	}
+	
+	public function browseFromPathInfo() {
+		$pathInfo = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
+		
+		if( preg_match( '#^ / ([^/]+) (?:/ (.*))? $#x', $pathInfo, $bif ) ) {
+			$fn = isset($bif[2]) ? $bif[2] : null;
+			return $this->browse( $bif[1], $fn, $fn === null ? '../' : '../../' );
+		} else {
+			return Nife_Util::httpResponse(
+				"404 Unrecognised URN/path",
+				"Expected a URL of the form '.../browse/<urn>/<filename>'\n".
+				($pathInfo ? "But got '{$pathInfo}'\n" : "But no path given.\n")
+			);
 		}
 	}
 }
