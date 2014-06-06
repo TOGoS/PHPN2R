@@ -55,7 +55,7 @@ if( $config === false ) {
 
 $repos = array();
 foreach( $config['repositories'] as $repoPath ) {
-	$repos[] = new TOGoS_PHPN2R_Repository( "$repoPath/data" );
+	$repos[] = new TOGoS_PHPN2R_Repository( "$repoPath" );
 }
 if( count($repos) == 0 ) {
 	send_error_headers("500 No repositories configured");
