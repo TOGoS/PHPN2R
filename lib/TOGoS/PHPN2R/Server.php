@@ -48,14 +48,39 @@ class TOGoS_PHPN2R_Server {
 		return $heads;
 	}
 	
+	protected function makeHeadListBlob() {
+		$headList = array();
+		$latestHeads = array();
+		foreach( $this->getHeadList() as $h ) {
+			$urn = 'x-ccouch-head:'.strtr($h, array('/'=>':'));
+			if( preg_match('#^(.+?):(\d+)$#',$urn,$bif) ) {
+				if( !isset($latestHeads[$bif[1]]) or (int)$bif[2] > (int)$latestHeads[$bif[1]] ) {
+					$latestHeads[$bif[1]] = $bif[2];
+				}
+			}
+			$headList[] = $urn;
+		}
+		
+		$data = '';
+		if( count($latestHeads) ) {
+			$names = array_keys($latestHeads);
+			natsort($names);
+			$data .= "# Latest heads\n";
+			foreach( $names as $n ) {
+				$data .= $n.':'.$latestHeads[$n] . "\n";
+			}
+			$data .= "\n";
+		}
+		
+		natsort($headList);
+		$data .= "# All heads\n";
+		$data .= implode("\n", $headList)."\n";
+		return new Nife_StringBlob($data);
+	}
+	
 	protected function findBlob($urn) {
 		if( $urn == 'head-list' ) {
-			$headList = array();
-			foreach( $this->getHeadList() as $h ) {
-				$headList[] = 'x-ccouch-head:'.strtr($h, array('/'=>':'));
-			}
-			natsort($headList);
-			return new Nife_StringBlob(implode("\n", $headList));
+			return $this->makeHeadListBlob();
 		}
 		foreach( $this->repos as $repo ) {
 			if( ($blob = $repo->findBlob($urn)) ) {
