@@ -41,7 +41,7 @@ class TOGoS_PHPN2R_Server {
 		return Nife_Util::httpResponse("404 Blob not found", "I coulnd't find $urn, bro.\n");
 	}
 	
-	protected function _serveBlob( $urn, $filenameHint, $sendContent ) {
+	protected function serveBlob( $urn, $filenameHint ) {
 		if( ($file = $this->findFile($urn)) ) {
 			$size = filesize($file);
 			
@@ -56,27 +56,21 @@ class TOGoS_PHPN2R_Server {
 				$etag = null;
 			}
 			
-			header('Date: '.gmdate(self::HTTP_DATE_FORMAT, time()));
-			header('Expires: '.gmdate(self::HTTP_DATE_FORMAT, time() + (3600*24*365)));
-			header('Cache-Control: public');
-			if( $etag ) header("ETag: \"$etag\"");
-			if( is_int($size) ) header("Content-Length: $size");
-			header("Content-Type: $ct");
-			
-			if( $sendContent ) {
-				readfile($file);
-			}
+			$headers = array(
+				'Date' => gmdate(self::HTTP_DATE_FORMAT, time()),
+				'Expires' => gmdate(self::HTTP_DATE_FORMAT, time() + (3600*24*365)),
+				'Cache-Control' => 'public',
+				'Content-Type' => $ct
+			);
+			if( $etag) $headers['ETag'] = "\"$etag\"";
+			return Nife_Util::httpResponse(
+				200,
+				new TOGoS_PHPN2R_FileBlob($file),
+				$headers
+			);
 		} else {
 			return $this->make404Response($urn, $filenameHint);
 		}
-	}
-	
-	public function serveBlob( $urn, $filenameHint ) {
-		$this->_serveBlob( $urn, $filenameHint, true );
-	}
-
-	public function serveBlobHeaders( $urn, $filenameHint ) {
-		$this->_serveBlob( $urn, $filenameHint, false );
 	}
 	
 	public function browse( $urn, $filenameHint, $rp ) {
@@ -135,6 +129,32 @@ class TOGoS_PHPN2R_Server {
 				"404 Unrecognised URN/path",
 				"Expected a URL of the form '.../browse/<urn>/<filename>'\n".
 				($pathInfo ? "But got '{$pathInfo}'\n" : "But no path given.\n")
+			);
+		}
+	}
+	
+	public function rawFromPathInfo() {
+		$pathInfo = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
+		
+		if( preg_match( '#^/([^/]+)/?(.*)$#', $pathInfo, $bif ) ) {
+			return $this->serveBlob( $bif[1], $bif[2] );
+		} else {
+			return Nife_Util::httpResponse(
+				"404 Unrecognised URN/path",
+				"Expected a URL of the form '.../raw/<urn>/<filename>'\n".
+				($pathInfo ? "But got '{$pathInfo}'\n" : "But no path given.\n")
+			);
+		}
+	}
+	
+	public function rawFromN2r() {
+		$qs = $_SERVER['QUERY_STRING'];
+		if( $qs ) {
+			return $this->serveBlob( $qs, null );
+		} else {
+			return Nife_Util::httpResponse(
+				"404 Unrecognised URN/path",
+				"Expected a URN in the query string, but it is empty.\n"
 			);
 		}
 	}

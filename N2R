@@ -1,12 +1,4 @@
 <?php
 
-require 'le-servique.php';
-
-$qs = $_SERVER['QUERY_STRING'];
-if( $qs ) {
-	server_la_contenteaux( $qs, null );
-} else {
-	header("HTTP/1.0 404 Unrecognised URN/path");
-	header("Content-Type: text/plain");
-	echo "Expected a URN in the query string, but it is empty.\n";
-}
+$res = require 'setup.php';
+Nife_Util::outputResponse($res->rawFromN2r());

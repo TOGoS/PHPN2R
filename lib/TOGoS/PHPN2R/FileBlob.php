@@ -12,7 +12,7 @@ class TOGoS_PHPN2R_FileBlob implements Nife_Blob
 	}
 	
 	public function getLength() {
-		return filesize($filePath);
+		return filesize($this->filePath);
 	}
 	
 	public function writeTo( $callback ) {

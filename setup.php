@@ -5,8 +5,8 @@
  * - autoloader
  * - error handling
  *
- * and return a registry object that can be used to
- * kick off the rest of the work.
+ * and return a Server object that can be used to kick off the rest of
+ * the work.
  */
 
 error_reporting(E_ALL|E_STRICT);
