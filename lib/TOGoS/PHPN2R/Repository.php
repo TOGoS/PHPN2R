@@ -14,6 +14,10 @@ class TOGoS_PHPN2R_Repository {
 		return null;
 	}
 	
+	public function getDir() {
+		return $this->dir;
+	}
+	
 	// It might make more sense for this to be in server instead of
 	// repository so that the latest head can be found across multiple
 	// repositories.

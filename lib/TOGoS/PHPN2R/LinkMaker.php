@@ -18,6 +18,9 @@ class TOGoS_PHPN2R_LinkMaker {
 	public function htmlLink( $url, $text ) {
 		return "<a href=\"".htmlspecialchars($url)."\">".htmlspecialchars($text)."</a>";
 	}
+	public function rawHtmlLinkForUrn( $urn, $filenameHint, $text ) {
+		return $this->htmlLink($this->componentUrl('raw', $urn, $filenameHint), $text);
+	}
 	public function htmlLinkForUrn( $urn, $filenameHint, $text ) {
 		if( $text === null ) $text = $urn;
 		if( preg_match('/^(x-parse-rdf|(?:x-)?(?:rdf-)?subject(?:-of)?):(.*)$/',$urn,$bif) ) {
@@ -26,12 +29,14 @@ class TOGoS_PHPN2R_LinkMaker {
 			if( $text == $urn ) {
 				return
 					$this->htmlLink($this->componentUrl('browse', $blobUrn, $filenameHint), $subjectScheme).':'.
-					$this->htmlLinkForUrn($blobUrn, $filenameHint, $blobUrn);
+					$this->rawHtmlLinkForUrn($blobUrn, $filenameHint, $blobUrn);
 			} else {
 				return $this->htmlLink($this->componentUrl('browse', $blobUrn, $filenameHint), $text);
 			}
 		} else {
-			return $this->htmlLink($this->componentUrl('raw', $urn, $filenameHint), $text);
+			return
+				$this->htmlLink($this->componentUrl('raw', $urn, $filenameHint), $text).' ['.
+				$this->htmlLink($this->componentUrl('browse', $urn, $filenameHint), 'browse').']';
 		}
 	}
 	public function urnHtmlLinkReplacementCallback( $matches ) {

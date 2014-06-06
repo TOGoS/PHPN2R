@@ -26,7 +26,37 @@ class TOGoS_PHPN2R_Server {
 		}
 	}
 	
+	protected function collectFiles( $dir, $as, array &$dest ) {
+		if( is_dir($dir) ) {
+			$dh = @opendir($dir);
+			if( $dh === false ) return;
+			while( ($en = readdir($dh)) !== false ) {
+				if( $en[0] == '.' ) continue;
+				$this->collectFiles( "$dir/$en", $as ? "$as/$en" : $en, $dest );
+			}
+			closedir($dh);
+		} else if( is_file($dir) ) {
+			$dest[] = $as;
+		}
+	}
+	
+	public function getHeadList() {
+		$heads = array();
+		foreach( $this->repos as $repo ) {
+			$this->collectFiles( $repo->getDir()."/heads", '', $heads );
+		}
+		return $heads;
+	}
+	
 	protected function findBlob($urn) {
+		if( $urn == 'head-list' ) {
+			$headList = array();
+			foreach( $this->getHeadList() as $h ) {
+				$headList[] = 'x-ccouch-head:'.strtr($h, array('/'=>':'));
+			}
+			natsort($headList);
+			return new Nife_StringBlob(implode("\n", $headList));
+		}
 		foreach( $this->repos as $repo ) {
 			if( ($blob = $repo->findBlob($urn)) ) {
 				return $blob;
@@ -87,7 +117,7 @@ class TOGoS_PHPN2R_Server {
 				$content = (string)$blob;
 				$contentHtml = htmlspecialchars($content);
 				$contentHtml = preg_replace_callback(
-					'#(?:urn|(?:x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
+					'#(?:urn|(?:x-ccouch-head|x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
 					array($linkMaker,'urnHtmlLinkReplacementCallback'), $contentHtml
 				);
 				$pageContent =
@@ -100,7 +130,7 @@ class TOGoS_PHPN2R_Server {
 			$rawUrl = $rp . ($filenameHint === null ? 'N2R?'.$urn : 'raw/'.$urn.'/'.$filenameHint);
 			$links = array();
 			if($filenameHint) $links[] = $linkMaker->htmlLinkForUrn($urn,$filenameHint,'Raw');
-			$links[] = $linkMaker->htmlLinkForUrn($urn,null,'N2R');
+			$links[] = $linkMaker->rawHtmlLinkForUrn($urn,null,'N2R');
 			
 			$html =
 				"<html>\n".
