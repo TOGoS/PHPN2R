@@ -14,7 +14,7 @@ class TOGoS_PHPN2R_Repository {
 		return null;
 	}
 	
-	public function findFile( $urn ) {
+	public function findBlob( $urn ) {
 		$basename = $this->urnToBasename($urn);
 		if( $basename === null ) return null;
 		
@@ -35,6 +35,6 @@ class TOGoS_PHPN2R_Repository {
 			else $fil = null;
 		}
 		closedir($dir);
-		return $fil;
+		return $fil ? new TOGoS_PHPN2R_FileBlob($fil) : null;
 	}
 }

@@ -2,27 +2,31 @@
 
 class TOGoS_PHPN2R_FileBlob implements Nife_Blob
 {
-	protected $filePath;
-	public function __construct( $filePath ) {
-		$this->filePath = $filePath;
+	protected $file;
+	public function __construct( $file ) {
+		$this->file = $file;
 	}
 	
 	public function __toString() {
-		return file_get_contents($this->filePath);
+		return file_get_contents($this->file);
 	}
 	
 	public function getLength() {
-		return filesize($this->filePath);
+		return filesize($this->file);
 	}
 	
 	public function writeTo( $callback ) {
-		$fh = fopen($this->filePath,'rb');
+		$fh = fopen($this->file,'rb');
 		if( $fh === false ) {
-			throw new Exception("Failed to open {$this->filePath} for reading");
+			throw new Exception("Failed to open {$this->file} for reading");
 		}
 		while( $data = fread($fh, 65536) ) {
 			call_user_func($callback, $data);
 		}
 		fclose($fh);
+	}
+	
+	public function getFile() {
+		return $this->file;
 	}
 }

@@ -26,10 +26,10 @@ class TOGoS_PHPN2R_Server {
 		}
 	}
 	
-	protected function findFile($urn) {
+	protected function findBlob($urn) {
 		foreach( $this->repos as $repo ) {
-			if( ($file = $repo->findFile($urn)) ) {
-				return $file;
+			if( ($blob = $repo->findBlob($urn)) ) {
+				return $blob;
 			}
 		}
 		return null;
@@ -42,12 +42,11 @@ class TOGoS_PHPN2R_Server {
 	}
 	
 	protected function serveBlob( $urn, $filenameHint ) {
-		if( ($file = $this->findFile($urn)) ) {
-			$size = filesize($file);
-			
+		if( ($blob = $this->findBlob($urn)) ) {
 			$ct = null;
-			$enc = null;
-			$ct = $this->guessFileType( $file, $filenameHint );
+			if( $blob instanceof TOGoS_PHPN2R_FileBlob ) {
+				$ct = $this->guessFileType( $blob->getFile(), $filenameHint );
+			}
 			if( $ct == null ) $ct = 'application/octet-stream';
 
 			if( preg_match( '/^urn:(?:sha1|bitprint):([0-9A-Z]{32})/', $urn, $bif ) ) {
@@ -65,7 +64,7 @@ class TOGoS_PHPN2R_Server {
 			if( $etag) $headers['ETag'] = "\"$etag\"";
 			return Nife_Util::httpResponse(
 				200,
-				new TOGoS_PHPN2R_FileBlob($file),
+				$blob,
 				$headers
 			);
 		} else {
@@ -74,18 +73,18 @@ class TOGoS_PHPN2R_Server {
 	}
 	
 	public function browse( $urn, $filenameHint, $rp ) {
-		if( ($file = $this->findFile($urn)) ) {
+		if( ($blob = $this->findBlob($urn)) ) {
 			$browseSizeLimit = 1024*1024*10;
-			$blobSize = filesize($file);
-			$tooBig = $blobSize > $browseSizeLimit;
-
+			$blobSize = $blob->getLength();
+			$tooBig = $blobSize === null || $blobSize > $browseSizeLimit;
+			
 			$linkMaker = new TOGoS_PHPN2R_LinkMaker($rp);
 			$title = ($filenameHint ? "$filenameHint ($urn)" : $urn).' - PHPN2R blob browser';
-
+			
 			if( $tooBig ) {
 				$pageContent = "<p>This file is too big (> $browseSizeLimit bytes) to analyze.</p>\n";
 			} else {
-				$content = file_get_contents($file);
+				$content = (string)$blob;
 				$contentHtml = htmlspecialchars($content);
 				$contentHtml = preg_replace_callback(
 					'#(?:urn|(?:x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
