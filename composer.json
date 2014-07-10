@@ -1,0 +1,12 @@
+{
+	"name": "togos/php-n2r",
+	"description": "Library (and stand-alone scripts) for handling /uri-res/N2R requests backed by a ccouch repository.",
+	"require": {
+		"ryprop/nife": "~0.0.2"
+	},
+	"autoload": {
+		"psr-0": {
+			"TOGoS_PHPN2R_": "lib/"
+		}
+	}
+}

@@ -2,4 +2,6 @@
 # I symlink browse.php to browse because otherwise
 # emacs gets really confused when I try to edit it.
 browse.php
+composer.lock
 config.php
+vendor
