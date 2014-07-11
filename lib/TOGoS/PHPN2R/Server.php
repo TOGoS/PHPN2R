@@ -212,4 +212,24 @@ class TOGoS_PHPN2R_Server {
 			);
 		}
 	}
+	
+	public function handleRequest( $pathInfo ) {
+		if( $pathInfo == '/N2R' ) {
+			return $this->rawFromN2r();
+		} else if( preg_match( '#^ / (raw|browse) / ([^/]+) (?:/ (.*))? $#x', $pathInfo, $bif ) ) {
+			$service = $bif[1];
+			$urn = $bif[2];
+			$fn = isset($bif[3]) ? $bif[3] : null;
+			if( $service == 'raw' ) {
+				return $this->serveBlob( $urn, $fn );
+			} else {
+				return $this->browse( $urn, $fn, $fn === null ? '../' : '../../' );
+			}
+		} else {
+			return Nife_Util::httpResponse(
+				"404 Unrecognised URN/path",
+				"Don't know how to handle path \"$pathInfo\".\n"
+			);
+		}
+	}
 }
