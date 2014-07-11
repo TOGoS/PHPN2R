@@ -96,7 +96,7 @@ class TOGoS_PHPN2R_Server {
 		return Nife_Util::httpResponse("404 Blob not found", "I coulnd't find $urn, bro.\n");
 	}
 	
-	public function serveBlob( $urn, $filenameHint ) {
+	public function serveBlob( $urn, $filenameHint=null ) {
 		if( ($blob = $this->findBlob($urn)) ) {
 			$ct = null;
 			if( $blob instanceof TOGoS_PHPN2R_FileBlob ) {
