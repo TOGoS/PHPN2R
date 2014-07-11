@@ -17,6 +17,22 @@ class TOGoS_PHPN2R_Repository {
 	public function getDir() {
 		return $this->dir;
 	}
+
+	/**
+	 * Extract an SHA1 hash from a sha1/bitprint URN, hex-encoded
+	 * string, or non-encoded string (i.e. the has itself)
+	 */
+	public static function extractSha1( $string ) {
+		if( preg_match( '/^(?:(?:urn:)?(?:sha1|bitprint):)?([0-9A-Z]{32})(?:$|\W)/i', $string, $bif ) ) {
+			return TOGoS_PHPN2R_Base32::decode($bif[1]);
+		} else if( preg_match('/^[0-9a-f]{40}$/i', $string) ) {
+			return hex2bin($string);
+		} else if( strlen($string) == 20 ) {
+			return $string;
+		} else {
+			throw new Exception("Unable to extract SHA-1 from string '$string'");
+		}
+	}
 	
 	// It might make more sense for this to be in server instead of
 	// repository so that the latest head can be found across multiple
@@ -81,5 +97,44 @@ class TOGoS_PHPN2R_Repository {
 		}
 		closedir($dir);
 		return $fil ? new TOGoS_PHPN2R_FileBlob($fil) : null;
+	}
+	
+	public function putStream( $stream, $sector='uploaded', $expectedSha1=null ) {
+		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
+		
+		$dataDir = $this->dir.'/data';
+		$tempDir = "{$dataDir}/{$sector}";
+		$tempFile = "{$tempDir}/.temp-".rand(1000000,9999999).'-'.rand(1000000,9999999);
+		if( !is_dir($tempDir) ) mkdir($tempDir,0755,true);
+		$tempFw = fopen($tempFile,'wb');
+		if( $tempFw === null ) {
+			throw new Exception("Unable to open temp file '{$tempFile}' in 'wb' mode");
+		}
+				
+		$hash = hash_init('sha1');
+		while( !feof($stream) ) {
+			$data = fread( $stream, 1024*1024 );
+			hash_update( $hash, $data );
+			fwrite( $tempFw, $data );
+		}
+		fclose( $tempFw );
+		$hash = hash_final( $hash, true );
+		
+		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
+			unlink( $tempFile );
+			throw new Exception(
+				"Hash of uploaded data does not match expected: ".
+				TOGoS_PHPN2R_Base32::encode($hash)." != ".
+				TOGoS_PHPN2R_Base32::encode($expectedSha1)
+			);
+		}
+		
+		$basename = TOGoS_PHPN2R_Base32::encode($hash);
+		$first2 = substr($basename,0,2);
+		$destDir = "$dataDir/$sector/$first2";
+		if( !is_dir($destDir) ) mkdir( $destDir, 0755, true );
+		if( !is_dir($destDir) ) throw new Exception("Failed to create directory: $destDir");
+		rename( $tempFile, "$destDir/$basename" );
+		return "urn:sha1:$basename";
 	}
 }
