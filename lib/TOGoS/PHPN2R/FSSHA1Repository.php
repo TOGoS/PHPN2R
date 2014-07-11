@@ -8,7 +8,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$this->dir = $dir;
 	}
 	
-	function urnToBasename( $urn ) {
+	public static function urnToBasename( $urn ) {
 		if( preg_match( '/^urn:(?:sha1|bitprint):([0-9A-Z]{32})/', $urn, $bif ) ) {
 			return $bif[1];
 		}
@@ -76,7 +76,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 			return $this->findHead($bif[1]);
 		}
 		
-		$basename = $this->urnToBasename($urn);
+		$basename = self::urnToBasename($urn);
 		if( $basename === null ) return null;
 		
 		$first2 = substr($basename,0,2);
