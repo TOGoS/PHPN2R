@@ -100,6 +100,47 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		return $fil ? new TOGoS_PHPN2R_FileBlob($fil) : null;
 	}
 	
+	/**
+	 * Moves a file to its proper location in the repository.
+	 * Hash must already have been calculated and verified.
+	 * @return string the destination path
+	 */
+	protected function insertTempFile( $tempFile, $sector, $hash ) {
+		$basename = TOGoS_PHPN2R_Base32::encode($hash);
+		$first2 = substr($basename,0,2);
+		$dataDir = $this->dir.'/data';
+		$destDir = "$dataDir/$sector/$first2";
+		$destFile = "$destDir/$basename";
+		if( !is_dir($destDir) ) mkdir( $destDir, 0755, true );
+		if( !is_dir($destDir) ) throw new Exception("Failed to create directory: $destDir");
+		rename( $tempFile, $destFile );
+		return $destFile;
+	}
+	
+	public function putTempFile( $tempFile, $sector='uploaded', $expectedSha1=null ) {
+		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
+		
+		$tempFr = fopen($tempFile,'rb');
+		$hash = hash_init('sha1');
+		while( !feof($tempFr) ) {
+			$data = fread( $tempFr, 1024*1024 );
+			hash_update( $hash, $data );
+		}
+		fclose( $tempFr );
+		$hash = hash_final( $hash, true );
+		
+		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
+			throw new Exception(
+				"Hash of temp file '$tempFile' does not match expected: ".
+				TOGoS_PHPN2R_Base32::encode($hash)." != ".
+				TOGoS_PHPN2R_Base32::encode($expectedSha1)
+			);
+		}
+		
+		$this->insertTempFile( $tempFile, $sector, $hash );
+		return "urn:sha1:".TOGoS_PHPN2R_Base32::encode($hash);
+	}
+
 	public function putStream( $stream, $sector='uploaded', $expectedSha1=null ) {
 		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
 		
@@ -130,12 +171,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 			);
 		}
 		
-		$basename = TOGoS_PHPN2R_Base32::encode($hash);
-		$first2 = substr($basename,0,2);
-		$destDir = "$dataDir/$sector/$first2";
-		if( !is_dir($destDir) ) mkdir( $destDir, 0755, true );
-		if( !is_dir($destDir) ) throw new Exception("Failed to create directory: $destDir");
-		rename( $tempFile, "$destDir/$basename" );
-		return "urn:sha1:$basename";
+		$this->insertTempFile( $tempFile, $sector, $hash );
+		return "urn:sha1:".TOGoS_PHPN2R_Base32::encode($hash);
 	}
 }
