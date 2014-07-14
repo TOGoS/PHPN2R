@@ -78,12 +78,12 @@ class TOGoS_PHPN2R_Server {
 		return new Nife_StringBlob($data);
 	}
 	
-	protected function findBlob($urn) {
+	protected function getBlob($urn) {
 		if( $urn == 'head-list' ) {
 			return $this->makeHeadListBlob();
 		}
 		foreach( $this->repos as $repo ) {
-			if( ($blob = $repo->findBlob($urn)) ) {
+			if( ($blob = $repo->getBlob($urn)) ) {
 				return $blob;
 			}
 		}
@@ -97,7 +97,7 @@ class TOGoS_PHPN2R_Server {
 	}
 	
 	public function serveBlob( $urn, $filenameHint=null ) {
-		if( ($blob = $this->findBlob($urn)) ) {
+		if( ($blob = $this->getBlob($urn)) ) {
 			$ct = null;
 			if( $blob instanceof TOGoS_PHPN2R_FileBlob ) {
 				$ct = $this->guessFileType( $blob->getFile(), $filenameHint );
@@ -128,7 +128,7 @@ class TOGoS_PHPN2R_Server {
 	}
 	
 	public function browse( $urn, $filenameHint, $rp ) {
-		if( ($blob = $this->findBlob($urn)) ) {
+		if( ($blob = $this->getBlob($urn)) ) {
 			$browseSizeLimit = 1024*1024*10;
 			$blobSize = $blob->getLength();
 			$tooBig = $blobSize === null || $blobSize > $browseSizeLimit;
