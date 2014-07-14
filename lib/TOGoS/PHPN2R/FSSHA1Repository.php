@@ -38,7 +38,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	// It might make more sense for this to be in server instead of
 	// repository so that the latest head can be found across multiple
 	// repositories.
-	protected function getHeadBlob( $path ) {
+	protected function getHeadFile( $path ) {
 		// Allow colons in place of slashes to work
 		// around Apache/PHP getting confused about them.
 		$path = strtr($path, array(':'=>'/'));
@@ -65,15 +65,12 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		} else {
 			$file = $headsDir.'/'.$path;
 		}
-		if( file_exists($file) ) {
-			return new TOGoS_PHPN2R_FileBlob($file);
-		}
-		return null;
+		return file_exists($file) ? $file : null;
 	}
 	
-	public function getBlob( $urn ) {
+	public function getFile( $urn ) {
 		if( preg_match('/^(?:x-)ccouch-head:(.*)$/', $urn, $bif) ) {
-			return $this->getHeadBlob($bif[1]);
+			return $this->getHeadFile($bif[1]);
 		}
 		
 		$basename = self::urnToBasename($urn);
@@ -97,7 +94,12 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 			else $fil = null;
 		}
 		closedir($dir);
-		return $fil ? new TOGoS_PHPN2R_FileBlob($fil) : null;
+		return $fil;
+	}
+	
+	public function getBlob( $urn ) {
+		$file = $this->getFile($urn);
+		return $file === null ? null : new TOGoS_PHPN2R_FileBlob($file);
 	}
 	
 	/**
