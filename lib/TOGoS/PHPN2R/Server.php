@@ -78,7 +78,7 @@ class TOGoS_PHPN2R_Server {
 		return new Nife_StringBlob($data);
 	}
 	
-	protected function getBlob($urn) {
+	public function getBlob($urn) {
 		if( $urn == 'head-list' ) {
 			return $this->makeHeadListBlob();
 		}
