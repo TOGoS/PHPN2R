@@ -1,4 +1,4 @@
 <?php
 
 $res = require 'setup.php';
-Nife_Util::outputResponse($res->browseFromPathInfo());
+Nife_Util::outputResponse($res->handleRequest('/browse'.$_SERVER['PATH_INFO']));

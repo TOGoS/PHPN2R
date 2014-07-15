@@ -1,4 +1,4 @@
 <?php
 
 $res = require 'setup.php';
-Nife_Util::outputResponse($res->rawFromN2r());
+Nife_Util::outputResponse($res->handleRequest('/N2R'));

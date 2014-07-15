@@ -1,4 +1,4 @@
 <?php
 
 $res = require 'setup.php';
-Nife_Util::outputResponse($res->rawFromPathInfo());
+Nife_Util::outputResponse($res->handleRequest('/raw'.$_SERVER['PATH_INFO']));

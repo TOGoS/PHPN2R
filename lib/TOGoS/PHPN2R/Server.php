@@ -172,64 +172,52 @@ class TOGoS_PHPN2R_Server {
 		}
 	}
 	
-	public function browseFromPathInfo() {
-		$pathInfo = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
-		
-		if( preg_match( '#^ / ([^/]+) (?:/ (.*))? $#x', $pathInfo, $bif ) ) {
-			$fn = isset($bif[2]) ? $bif[2] : null;
-			return $this->browse( $bif[1], $fn, $fn === null ? '../' : '../../' );
+	protected function extractParams($pathInfo, $method, $queryString) {
+		if( $pathInfo == '/N2R' ) {
+			return $queryString ? array(
+				'service' => 'raw',
+				'method' => $method,
+				'URN' => $queryString,
+				'filename hint' => null,
+				'root prefix' => '',
+				'error message' => null
+			) : array(
+				'service' => 'bad-request',
+				'error message' => 'No query string given'
+			);
+		} else if( preg_match( '#^ / (raw|browse) / ([^/]+) (?:/ (.*))? $#x', $pathInfo, $bif ) ) {
+			$fn = isset($bif[3]) ? $bif[3] : null;
+			return array(
+				'service' => $bif[1],
+				'method' => $method,
+				'URN' => $bif[2],
+				'filename hint' => $fn,
+				'root prefix' => $fn === null ? '../' : '../../'
+			);
 		} else {
-			return Nife_Util::httpResponse(
-				"404 Unrecognised URN/path",
-				"Expected a URL of the form '.../browse/<urn>/<filename>'\n".
-				($pathInfo ? "But got '{$pathInfo}'\n" : "But no path given.\n")
+			return array(
+				'service' => 'bad-request',
+				'error message' => "Invalid request"
 			);
 		}
 	}
 	
-	public function rawFromPathInfo() {
-		$pathInfo = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
-		
-		if( preg_match( '#^/([^/]+)/?(.*)$#', $pathInfo, $bif ) ) {
-			return $this->serveBlob( $bif[1], $bif[2] );
+	public function handleReekQuest( array $params ) {
+		if( $params['service'] == 'bad-request' ) {
+			return Nife_Util::httpResponse("404 Unrecognized path", $params['error message']);
+		} else if( $params['method'] == 'GET' ) {
+			if( $params['service'] == 'browse' ) {
+				return $this->browse($params['URN'], $params['filename hint'], $params['root prefix']);
+			} else {
+				return $this->serveBlob($params['URN'], $params['filename hint']);
+			}
 		} else {
-			return Nife_Util::httpResponse(
-				"404 Unrecognised URN/path",
-				"Expected a URL of the form '.../raw/<urn>/<filename>'\n".
-				($pathInfo ? "But got '{$pathInfo}'\n" : "But no path given.\n")
-			);
-		}
-	}
-	
-	public function rawFromN2r() {
-		$qs = $_SERVER['QUERY_STRING'];
-		if( $qs ) {
-			return $this->serveBlob( $qs, null );
-		} else {
-			return Nife_Util::httpResponse(
-				"404 Unrecognised URN/path",
-				"Expected a URN in the query string, but it is empty.\n"
-			);
+			return Nife_Util::httpResponse("405 Method not allowed", "Method {$params['method']} not allowed");
 		}
 	}
 	
 	public function handleRequest( $pathInfo ) {
-		if( $pathInfo == '/N2R' ) {
-			return $this->rawFromN2r();
-		} else if( preg_match( '#^ / (raw|browse) / ([^/]+) (?:/ (.*))? $#x', $pathInfo, $bif ) ) {
-			$service = $bif[1];
-			$urn = $bif[2];
-			$fn = isset($bif[3]) ? $bif[3] : null;
-			if( $service == 'raw' ) {
-				return $this->serveBlob( $urn, $fn );
-			} else {
-				return $this->browse( $urn, $fn, $fn === null ? '../' : '../../' );
-			}
-		} else {
-			return Nife_Util::httpResponse(
-				"404 Unrecognised URN/path",
-				"Don't know how to handle path \"$pathInfo\".\n"
-			);
-		}
+		$params = $this->extractParams($pathInfo, $_SERVER['REQUEST_METHOD'], $_SERVER['QUERY_STRING']);
+		return $this->handleReekQuest($params);
 	}
 }
