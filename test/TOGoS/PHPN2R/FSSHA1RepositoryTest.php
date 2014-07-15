@@ -19,6 +19,13 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends PHPUnit_Framework_TestCase
 		return fopen($this->newHelloWorldTempFile(), "rb");
 	}
 	
+	public function testPutString() {
+		$this->assertEquals(
+			$this->helloWorldUrn,
+			$this->repo->putString($this->helloWorldText, 'blah')
+		);
+	}
+	
 	public function testPutTempFile() {
 		$this->assertEquals(
 			$this->helloWorldUrn,

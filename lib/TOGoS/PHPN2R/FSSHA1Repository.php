@@ -35,6 +35,21 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		}
 	}
 	
+	public static function sha1Urn( $hash ) {
+		if( strlen($hash) != 20 ) {
+			throw new Exception("SHA-1 hash given should be a 20-byte string; got ".strlen($hash)." bytes");
+		}
+		return "urn:sha1:".TOGoS_PHPN2R_Base32::encode($hash);
+	}
+	
+	protected function tempFileInSector($sector) {
+		$dataDir = $this->dir.'/data';
+		$tempDir = "{$dataDir}/{$sector}";
+		$tempFile = "{$tempDir}/.temp-".rand(1000000,9999999).'-'.rand(1000000,9999999);
+		if( !is_dir($tempDir) ) mkdir($tempDir,0755,true);
+		return $tempFile;
+	}
+	
 	// It might make more sense for this to be in server instead of
 	// repository so that the latest head can be found across multiple
 	// repositories.
@@ -140,16 +155,13 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		}
 		
 		$this->insertTempFile( $tempFile, $sector, $hash );
-		return "urn:sha1:".TOGoS_PHPN2R_Base32::encode($hash);
+		return self::sha1Urn($hash);
 	}
-
+	
 	public function putStream( $stream, $sector='uploaded', $expectedSha1=null ) {
 		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
 		
-		$dataDir = $this->dir.'/data';
-		$tempDir = "{$dataDir}/{$sector}";
-		$tempFile = "{$tempDir}/.temp-".rand(1000000,9999999).'-'.rand(1000000,9999999);
-		if( !is_dir($tempDir) ) mkdir($tempDir,0755,true);
+		$tempFile = $this->tempFileInSector($sector);
 		$tempFw = fopen($tempFile,'wb');
 		if( $tempFw === null ) {
 			throw new Exception("Unable to open temp file '{$tempFile}' in 'wb' mode");
@@ -174,6 +186,26 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		}
 		
 		$this->insertTempFile( $tempFile, $sector, $hash );
-		return "urn:sha1:".TOGoS_PHPN2R_Base32::encode($hash);
+		return self::sha1Urn($hash);
+	}
+	
+	public function putString( $data, $sector='uploaded', $expectedSha1=null ) {
+		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
+		
+		$hash = sha1($data, true);
+		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
+			throw new Exception(
+				"Hash of uploaded data does not match expected: ".
+				TOGoS_PHPN2R_Base32::encode($hash)." != ".
+				TOGoS_PHPN2R_Base32::encode($expectedSha1)
+			);
+		}
+		
+		$tempFile = $this->tempFileInSector($sector);
+		$tempFw = fopen($tempFile,'wb');
+		fwrite($tempFw, $data);
+		fclose($tempFw);
+		$this->insertTempFile($tempFile, $sector, $hash);
+		return self::sha1Urn($hash);
 	}
 }
