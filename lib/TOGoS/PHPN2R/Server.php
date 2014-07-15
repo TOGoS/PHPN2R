@@ -197,7 +197,7 @@ class TOGoS_PHPN2R_Server {
 		} else {
 			return array(
 				'service' => 'bad-request',
-				'error message' => "Invalid request"
+				'error message' => "Unrecongized path requested: $pathInfo"
 			);
 		}
 	}
