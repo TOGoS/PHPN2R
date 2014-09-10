@@ -25,7 +25,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	 */
 	public static function extractSha1( $string ) {
 		if( preg_match( '/^(?:(?:urn:)?(?:sha1|bitprint):)?([0-9A-Z]{32})(?:$|\W)/i', $string, $bif ) ) {
-			return TOGoS_PHPN2R_Base32::decode($bif[1]);
+			return TOGoS_Base32::decode($bif[1]);
 		} else if( preg_match('/^[0-9a-f]{40}$/i', $string) ) {
 			return hex2bin($string);
 		} else if( strlen($string) == 20 ) {
@@ -39,7 +39,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		if( strlen($hash) != 20 ) {
 			throw new Exception("SHA-1 hash given should be a 20-byte string; got ".strlen($hash)." bytes");
 		}
-		return "urn:sha1:".TOGoS_PHPN2R_Base32::encode($hash);
+		return "urn:sha1:".TOGoS_Base32::encode($hash);
 	}
 	
 	protected function tempFileInSector($sector) {
@@ -123,7 +123,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	 * @return string the destination path
 	 */
 	protected function insertTempFile( $tempFile, $sector, $hash ) {
-		$basename = TOGoS_PHPN2R_Base32::encode($hash);
+		$basename = TOGoS_Base32::encode($hash);
 		$first2 = substr($basename,0,2);
 		$dataDir = $this->dir.'/data';
 		$destDir = "$dataDir/$sector/$first2";
@@ -149,8 +149,8 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
 			throw new Exception(
 				"Hash of temp file '$tempFile' does not match expected: ".
-				TOGoS_PHPN2R_Base32::encode($hash)." != ".
-				TOGoS_PHPN2R_Base32::encode($expectedSha1)
+				TOGoS_Base32::encode($hash)." != ".
+				TOGoS_Base32::encode($expectedSha1)
 			);
 		}
 		
@@ -180,8 +180,8 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 			unlink( $tempFile );
 			throw new Exception(
 				"Hash of uploaded data does not match expected: ".
-				TOGoS_PHPN2R_Base32::encode($hash)." != ".
-				TOGoS_PHPN2R_Base32::encode($expectedSha1)
+				TOGoS_Base32::encode($hash)." != ".
+				TOGoS_Base32::encode($expectedSha1)
 			);
 		}
 		
@@ -196,8 +196,8 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
 			throw new Exception(
 				"Hash of uploaded data does not match expected: ".
-				TOGoS_PHPN2R_Base32::encode($hash)." != ".
-				TOGoS_PHPN2R_Base32::encode($expectedSha1)
+				TOGoS_Base32::encode($hash)." != ".
+				TOGoS_Base32::encode($expectedSha1)
 			);
 		}
 		
