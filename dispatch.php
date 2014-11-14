@@ -11,6 +11,10 @@
 // This is designed to work either as a mod_rewritten-to script
 // or as a standalone PHP web server router script.
 
+// If everything goes hunky-dory then this will be overridden later.
+// This helps make fatal errors more obvious.
+header('HTTP/1.0 500 Error By Default');
+
 $res = require 'setup.php';
 
 if( !isset($_SERVER['PATH_INFO']) ) {

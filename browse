@@ -1,4 +1,6 @@
 <?php
 
+header('HTTP/1.0 500 Error By Default');
+
 $res = require 'setup.php';
 Nife_Util::outputResponse($res->handleRequest('/browse'.$_SERVER['PATH_INFO']));
