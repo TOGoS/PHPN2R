@@ -99,7 +99,7 @@ class TOGoS_PHPN2R_Server {
 	public function serveBlob( $urn, $filenameHint=null ) {
 		if( ($blob = $this->getBlob($urn)) ) {
 			$ct = null;
-			if( $blob instanceof TOGoS_PHPN2R_FileBlob ) {
+			if( $blob instanceof Nife_FileBlob ) {
 				$ct = $this->guessFileType( $blob->getFile(), $filenameHint );
 			}
 			if( $ct == null ) $ct = 'application/octet-stream';

@@ -114,7 +114,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	
 	public function getBlob( $urn ) {
 		$file = $this->getFile($urn);
-		return $file === null ? null : new TOGoS_PHPN2R_FileBlob($file);
+		return $file === null ? null : new Nife_FileBlob($file);
 	}
 	
 	/**
