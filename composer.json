@@ -2,11 +2,11 @@
 	"name": "togos/php-n2r",
 	"description": "Library (and stand-alone scripts) for handling /uri-res/N2R requests backed by a ccouch repository.",
 	"require": {
-		"ryprop/nife": "~0.2.0",
-		"togos/base32": "~1.0.0"
+		"ryprop/nife": "^0.2.0",
+		"togos/base32": "^1.0.0"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "~3.7.37"
+		"phpunit/phpunit": "^3.7.37"
 	},
 	"autoload": {
 		"psr-0": {
