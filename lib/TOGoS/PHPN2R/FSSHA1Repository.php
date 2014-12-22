@@ -18,6 +18,13 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	public function getDir() {
 		return $this->dir;
 	}
+	
+	protected function cleanReadDirEntry($en) {
+		// Google Cloud Storage ('gs://...' handler) adds slashes on the
+		// ends of directory names returned by readdir($parentdir) but
+		// doesn't like dir//file paths, so strip them off:
+		return substr($en,strlen($en)-1) == '/' ? substr($en,0,strlen($en)-1) : $en;
+	}
 
 	/**
 	 * Extract an SHA1 hash from a sha1/bitprint URN, hex-encoded
@@ -104,6 +111,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$dir = opendir( $dataDir );
 		$fil = null;
 		while( $dir !== false and ($en = readdir($dir)) !== false ) {
+			$en = $this->cleanReadDirEntry($en);
 			$fil = "$dataDir/$en/$first2/$basename";
 			if( is_file($fil) ) break;
 			else $fil = null;
