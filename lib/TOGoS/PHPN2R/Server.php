@@ -177,7 +177,7 @@ class TOGoS_PHPN2R_Server {
 			return $queryString ? array(
 				'service' => 'raw',
 				'method' => $method,
-				'URN' => $queryString,
+				'URN' => urldecode($queryString),
 				'filename hint' => null,
 				'root prefix' => '',
 				'error message' => null
@@ -190,8 +190,8 @@ class TOGoS_PHPN2R_Server {
 			return array(
 				'service' => $bif[1],
 				'method' => $method,
-				'URN' => $bif[2],
-				'filename hint' => $fn,
+				'URN' => urldecode($bif[2]),
+				'filename hint' => urldecode($fn),
 				'root prefix' => $fn === null ? '../' : '../../'
 			);
 		} else {
