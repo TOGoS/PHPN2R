@@ -3,6 +3,8 @@
 class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 {
 	protected $dir;
+	public $tempFilenamePrefix = ".temp";
+	public $verifyRenames = true;
 	
 	public function __construct( $dir ) {
 		$this->dir = $dir;
@@ -52,7 +54,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	protected function tempFileInSector($sector) {
 		$dataDir = $this->dir.'/data';
 		$tempDir = "{$dataDir}/{$sector}";
-		$tempFile = "{$tempDir}/.temp-".rand(1000000,9999999).'-'.rand(1000000,9999999);
+		$tempFile = "{$tempDir}/{$this->tempFilenamePrefix}-".rand(1000000,9999999).'-'.rand(1000000,9999999);
 		if( !is_dir($tempDir) ) mkdir($tempDir,0755,true);
 		return $tempFile;
 	}
@@ -138,7 +140,12 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$destFile = "$destDir/$basename";
 		if( !is_dir($destDir) ) mkdir( $destDir, 0755, true );
 		if( !is_dir($destDir) ) throw new Exception("Failed to create directory: $destDir");
-		rename( $tempFile, $destFile );
+		if( !rename( $tempFile, $destFile ) ) {
+			throw new Exception("Failed to rename '$tempFile' to '$destFile'");
+		}
+		if( $this->verifyRenames and !file_exists($destFile) ) {
+			throw new Exception("'$destFile' does not exist after renaming temp file.");
+		}
 		return $destFile;
 	}
 	
@@ -211,6 +218,9 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		
 		$tempFile = $this->tempFileInSector($sector);
 		$tempFw = fopen($tempFile,'wb');
+		if( $tempFw === false ) {
+			throw new Exception("Failed to open temporary file {$tempFile} for writing");
+		}
 		fwrite($tempFw, $data);
 		fclose($tempFw);
 		$this->insertTempFile($tempFile, $sector, $hash);
