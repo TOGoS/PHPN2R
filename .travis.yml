@@ -1,0 +1,14 @@
+language: php
+
+php:
+  # - 5.2 - The code should work in 5.2, but Travis won't compose with that.
+  - 5.3
+  - 5.4
+  - 5.5
+  - 5.6
+  - hhvm
+  - nightly
+
+install: make test-dependencies
+
+script: make run-unit-tests

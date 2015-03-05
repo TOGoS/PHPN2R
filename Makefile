@@ -1,11 +1,21 @@
 default: run-unit-tests
 
 .PHONY: \
+	clean \
 	default \
-	run-unit-tests
+	run-unit-tests \
+	test-dependencies
 
-vendor: composer.json
-	composer update
+clean:
+	rm -rf vendor
 
-run-unit-tests: vendor
+composer.lock: | composer.json
+	composer install
+
+vendor: composer.lock
+	composer install
+
+test-dependencies: vendor
+
+run-unit-tests: test-dependencies
 	vendor/bin/phpunit --bootstrap vendor/autoload.php test

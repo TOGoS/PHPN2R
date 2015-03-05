@@ -3,6 +3,7 @@
 	"description": "Library (and stand-alone scripts) for handling /uri-res/N2R requests backed by a ccouch repository.",
 	"license": "MIT",
 	"require": {
+		"php": ">=5.2",	
 		"ryprop/nife": "^0.2.0",
 		"togos/base32": "^1.0.0"
 	},
