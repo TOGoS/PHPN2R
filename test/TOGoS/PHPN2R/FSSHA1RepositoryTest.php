@@ -7,6 +7,7 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends PHPUnit_Framework_TestCase
 		$this->helloWorldText = "Hello, world!\n";
 		$this->helloWorldUrn = 'urn:sha1:BH5MRW75E66ZWTJDUAHLMSFKOULYSU3N';
 		$this->wrongUrn = 'urn:sha1:ZZZMRW75E66ZWTJDUAHLMSFKOULYSZZZ';
+		$this->invalidUrn = 'Hi there!';
 	}
 	
 	protected function newHelloWorldTempFile() {
@@ -41,13 +42,23 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends PHPUnit_Framework_TestCase
 		);
 	}
 	
-	public function testPutTempFileWithBadUrn() {
+	protected function _testPutTempFileWithBadUrn($urn, $expectedExceptionClass) {
+		$caught = null;
 		try {
-			$this->repo->putTempFile($this->newHelloWorldTempFile(), 'blah',
-				$this->wrongUrn);
+			$this->repo->putTempFile($this->newHelloWorldTempFile(), 'blah', $urn);
 			$this->fail("Should've thrown a hash-mismatch exception.");
 		} catch( Exception $e ) {
+			$caught = get_class($e);
 		}
+		$this->assertEquals($expectedExceptionClass, $caught);
+	}
+	
+	public function testPutTempFileWithInvalidUrn() {
+		$this->_testPutTempFileWithBadUrn($this->invalidUrn, 'TOGoS_PHPN2R_IdentifierFormatException');
+	}
+	
+	public function testPutTempFileWithWrongUrn() {
+		$this->_testPutTempFileWithBadUrn($this->wrongUrn, 'TOGoS_PHPN2R_HashMismatchException');
 	}
 	
 	public function testPutStream() {
@@ -64,11 +75,22 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends PHPUnit_Framework_TestCase
 		);
 	}
 
-	public function testPutStreamWithBadUrn() {
+	protected function _testPutStreamWithBadUrn($urn, $expectedExceptionClass) {
+		$caught = null;
 		try {
-			$this->repo->putStream( $this->newHelloWorldStream(), 'blah', $this->wrongUrn );
+			$this->repo->putStream( $this->newHelloWorldStream(), 'blah', $urn );
 			$this->fail("Should've thrown a hash-mismatch exception.");
 		} catch( Exception $e ) {
+			$caught = get_class($e);
 		}
+		$this->assertEquals($expectedExceptionClass, $caught);
+	}
+	
+	public function testPutStreamWithInvalidUrn() {
+		$this->_testPutStreamWithBadUrn($this->invalidUrn, 'TOGoS_PHPN2R_IdentifierFormatException');
+	}
+	
+	public function testPutStreamWithWrongUrn() {
+		$this->_testPutStreamWithBadUrn($this->wrongUrn, 'TOGoS_PHPN2R_HashMismatchException');
 	}
 }

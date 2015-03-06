@@ -40,13 +40,13 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		} else if( strlen($string) == 20 ) {
 			return $string;
 		} else {
-			throw new Exception("Unable to extract SHA-1 from string '$string'");
+			throw new TOGoS_PHPN2R_IdentifierFormatException("Unable to extract SHA-1 from string '$string'");
 		}
 	}
 	
 	public static function sha1Urn( $hash ) {
 		if( strlen($hash) != 20 ) {
-			throw new Exception("SHA-1 hash given should be a 20-byte string; got ".strlen($hash)." bytes");
+			throw new TOGoS_PHPN2R_IdentifierFormatException("SHA-1 hash given should be a 20-byte string; got ".strlen($hash)." bytes");
 		}
 		return "urn:sha1:".TOGoS_Base32::encode($hash);
 	}
@@ -162,7 +162,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$hash = hash_final( $hash, true );
 		
 		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
-			throw new Exception(
+			throw new TOGoS_PHPN2R_HashMismatchException(
 				"Hash of temp file '$tempFile' does not match expected: ".
 				TOGoS_Base32::encode($hash)." != ".
 				TOGoS_Base32::encode($expectedSha1)
@@ -193,7 +193,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		
 		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
 			unlink( $tempFile );
-			throw new Exception(
+			throw new TOGoS_PHPN2R_HashMismatchException(
 				"Hash of uploaded data does not match expected: ".
 				TOGoS_Base32::encode($hash)." != ".
 				TOGoS_Base32::encode($expectedSha1)
@@ -209,7 +209,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		
 		$hash = sha1($data, true);
 		if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
-			throw new Exception(
+			throw new TOGoS_PHPN2R_HashMismatchException(
 				"Hash of uploaded data does not match expected: ".
 				TOGoS_Base32::encode($hash)." != ".
 				TOGoS_Base32::encode($expectedSha1)
