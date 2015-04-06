@@ -14,6 +14,23 @@ Can be used as a library or by itself.
 ext-lib contains classes from other libraries so that you don't need
 to ``composer install``` to use PHPN2R by itself.
 
+### Repository format
+
+The repositories listed in config.php are assumed to be of the following format
+
+```
+  <repository directory>/
+    data/
+      <arbitrary sector name>/
+        <first 2 letters of base32-encoded SHA-1>/
+          <base32-encoded SHA-1 of file contents>
+```
+
+You can have any number of sectors, and their names are not important.
+They just act as buckets within which you can organize your data
+(e.g. you might put really important stuff in one, less important
+stuff somewhere else, data of questionable value in yet another).
+
 ## Use as a library
 
 Explicitly not documented, because the API isn't so nice and I'm
