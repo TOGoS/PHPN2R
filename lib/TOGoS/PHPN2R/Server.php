@@ -205,7 +205,7 @@ class TOGoS_PHPN2R_Server {
 	public function handleReekQuest( array $params ) {
 		if( $params['service'] == 'bad-request' ) {
 			return Nife_Util::httpResponse("404 Unrecognized path", $params['error message']);
-		} else if( $params['method'] == 'GET' ) {
+		} else if( $params['method'] == 'GET' or $params['method'] == 'HEAD' ) {
 			if( $params['service'] == 'browse' ) {
 				return $this->browse($params['URN'], $params['filename hint'], $params['root prefix']);
 			} else {
