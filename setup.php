@@ -33,13 +33,18 @@ function server_la_php_error( $errlev, $errstr, $errfile=null, $errline=null ) {
 
 set_error_handler('server_la_php_error');
 
-function __autoload($className) {
-	$libDirs = array( __DIR__.'/lib', __DIR__.'/ext-lib' );
-	foreach( $libDirs as $libDir ) {
-		$filename = $libDir.'/'.strtr($className, array('_'=>'/')).'.php';
-		if( file_exists($filename) ) {
-			require_once $filename;
-			return;
+if( file_exists($composerAutoloadFile = __DIR__.'/vendor/autoload.php') ) {
+	require_once $composerAutoloadFile;
+} else {
+	// We can mostly get by without it.
+	function __autoload($className) {
+		$libDirs = array( __DIR__.'/lib', __DIR__.'/ext-lib' );
+		foreach( $libDirs as $libDir ) {
+			$filename = $libDir.'/'.strtr($className, array('_'=>'/')).'.php';
+			if( file_exists($filename) ) {
+				require_once $filename;
+				return;
+			}
 		}
 	}
 }
