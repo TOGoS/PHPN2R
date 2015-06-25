@@ -2,7 +2,10 @@
 
 class TOGoS_PHPN2R_Browser
 {
+	const RDF_TYPE    = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 	const CC_NAME     = 'http://ns.nuke24.net/ContentCouch/name';
+	const CC_DIRECTORY= 'http://ns.nuke24.net/ContentCouch/Directory';
+	const CC_BLOB     = 'http://ns.nuke24.net/ContentCouch/Blob';
 	const CC_TARGET   = 'http://ns.nuke24.net/ContentCouch/target';
 	const CC_ENTRIES  = 'http://ns.nuke24.net/ContentCouch/entries';
 	const CC_FILESIZE = 'http://bitzi.com/xmlns/2002/01/bz-core#fileLength';
@@ -48,14 +51,21 @@ class TOGoS_PHPN2R_Browser
 		$lines[] = "<tr><th>Filename</th><th></th><th></th><th>Size</th><th>Modified</th></tr>";
 		foreach( $dVal[self::CC_ENTRIES] as $entry ) {
 			$target = $entry[self::CC_TARGET];
+			if( preg_match('/^(?:x-rdf-subject|x-parse-rdf):(.*)$/',$target['uri'],$bif) ) {
+				$uri = $bif[1];
+				$defaultService = 'browse';
+			} else {
+				$uri = $target['uri'];
+				$defaultService = 'raw';
+			}
 			$name = $entry[self::CC_NAME];
+			$text = $name.($target[self::RDF_TYPE]['uri'] === self::CC_DIRECTORY ? '/' : '');
 			$modified = isset($entry[self::CC_MODIFIED]) ? $entry[self::CC_MODIFIED] : null;
-			$uri = $target['uri'];
 			$size = isset($target[self::CC_FILESIZE]) ? $target[self::CC_FILESIZE] : null;
 			
 			$lines[] = "<tr>".
-				"<td>".$linkMaker->rawHtmlLinkForUrn($uri,$name,$name)."</td>".
-				"<td>".$linkMaker->htmlLink($linkMaker->componentUrl('browse', $uri, $name), 'b')."</td>".
+				"<td>".$linkMaker->serviceHtmlLinkForUrn($defaultService, $uri,$name,$text)."</td>".
+				"<td>".$linkMaker->serviceHtmlLinkForUrn('browse', $uri, $name, 'b')."</td>".
 				"<td><a class=\"magnet-link\" href=\"".htmlspecialchars("magnet:?xt=".urlencode($uri)."&dn=".urlencode($name))."\"></a></td>".
 				"<td>$size</td><td>".htmlspecialchars($modified)."</td></tr>";
 		}

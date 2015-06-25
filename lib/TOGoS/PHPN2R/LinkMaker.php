@@ -18,8 +18,11 @@ class TOGoS_PHPN2R_LinkMaker {
 	public function htmlLink( $url, $text ) {
 		return "<a href=\"".htmlspecialchars($url)."\">".htmlspecialchars($text)."</a>";
 	}
+	public function serviceHtmlLinkForUrn( $service, $urn, $filenameHint, $text ) {
+		return $this->htmlLink($this->componentUrl($service, $urn, $filenameHint), $text);
+	}
 	public function rawHtmlLinkForUrn( $urn, $filenameHint, $text ) {
-		return $this->htmlLink($this->componentUrl('raw', $urn, $filenameHint), $text);
+		return $this->serviceHtmlLinkForUrn('raw', $urn, $filenameHint, $text);
 	}
 	public function htmlLinkForUrn( $urn, $filenameHint, $text ) {
 		if( $text === null ) $text = $urn;
