@@ -76,9 +76,18 @@ class TOGoS_PHPN2R_Browser
 	
 	protected function normalBrowsePageContent( $content, $linkMaker ) {
 		$contentHtml = htmlspecialchars($content);
+		$contentHtml = str_replace('&quot;','"',$contentHtml);
 		$contentHtml = preg_replace_callback(
 			'#(?:urn|(?:x-ccouch-head|x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
 			array($linkMaker,'urnHtmlLinkReplacementCallback'), $contentHtml
+		);
+		// This replacement is useful when browing JSON documents that
+		// use base32-encoded SHA-1s (with no urn: prefix) as 'blob IDs'
+		$contentHtml = preg_replace_callback(
+			'#(?<=")[A-Z2-7]{32}(?=")#',
+			//'#(?<=[\W])[A-Z2-7]{32}(?=[\W])#', // Matches any non-word chars around blob IDs, not just quotes
+			array($linkMaker,'base32Sha1HtmlBrowseLinkReplacementCallback'),
+			$contentHtml
 		);
 		return
 			"<pre>".

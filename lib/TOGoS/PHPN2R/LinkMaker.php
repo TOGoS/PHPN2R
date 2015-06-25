@@ -45,4 +45,8 @@ class TOGoS_PHPN2R_LinkMaker {
 	public function urnHtmlLinkReplacementCallback( $matches ) {
 		return $this->htmlLinkForUrn( $matches[0], null, $matches[0] );
 	}
+	public function base32Sha1HtmlBrowseLinkReplacementCallback( $matches ) {
+		$urn = "urn:sha1:".$matches[0];
+		return $this->serviceHtmlLinkForUrn( 'browse', $urn, null, $matches[0] );
+	}
 }
