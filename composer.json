@@ -5,10 +5,11 @@
 	"require": {
 		"php": ">=5.2",	
 		"ryprop/nife": "^0.2.0",
-		"togos/base32": "^1.0.0"
+		"togos/base32": "^2.0.0"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "^3.7.37"
+		"phpunit/phpunit": "^3.7.37",
+		"togos/xml-rdf-parser": "1.0.0"
 	},
 	"autoload": {
 		"psr-0": {

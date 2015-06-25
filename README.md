@@ -35,3 +35,8 @@ stuff somewhere else, data of questionable value in yet another).
 
 Explicitly not documented, because the API isn't so nice and I'm
 probably the only one in the world to whom it is useful, anyway.
+
+
+## TODO:
+
+Look at http://pablotron.org/software/zipstream-php/ for making zips of directories
