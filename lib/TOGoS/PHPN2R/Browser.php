@@ -59,15 +59,21 @@ class TOGoS_PHPN2R_Browser
 				$defaultService = 'raw';
 			}
 			$name = $entry[self::CC_NAME];
-			$text = $name.($target[self::RDF_TYPE]['uri'] === self::CC_DIRECTORY ? '/' : '');
+			$isDirectory = $target[self::RDF_TYPE]['uri'] === self::CC_DIRECTORY;
+			$text = $name.($isDirectory ? '/' : '');
 			$modified = isset($entry[self::CC_MODIFIED]) ? $entry[self::CC_MODIFIED] : null;
 			$size = isset($target[self::CC_FILESIZE]) ? $target[self::CC_FILESIZE] : null;
+			$browseUrl = $linkMaker->componentUrl('browse', $uri, $name);
+			$magnetUrl = "magnet:?xt=".urlencode($uri)."&dn=".urlencode($name);
 			
 			$lines[] = "<tr>".
 				"<td>".$linkMaker->serviceHtmlLinkForUrn($defaultService, $uri,$name,$text)."</td>".
-				"<td>".$linkMaker->serviceHtmlLinkForUrn('browse', $uri, $name, 'b')."</td>".
-				"<td><a class=\"magnet-link\" href=\"".htmlspecialchars("magnet:?xt=".urlencode($uri)."&dn=".urlencode($name))."\"></a></td>".
-				"<td>$size</td><td>".htmlspecialchars($modified)."</td></tr>";
+				($isDirectory ?
+				 ("<td></td></td></td>") :
+				 ("<td><a class=\"browse-link\" href=\"".htmlspecialchars($browseUrl)."\">b</a></td>".
+				  "<td><a class=\"magnet-link\" href=\"".htmlspecialchars($magnetUrl)."\"></a></td>")).
+				"<td>$size</td><td>".htmlspecialchars($modified)."</td>".
+				"</tr>";
 		}
 		$lines[] = "</table>";
 		
