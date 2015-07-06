@@ -92,7 +92,7 @@ class TOGoS_PHPN2R_Browser
 		// use base32-encoded SHA-1s (with no urn: prefix) as 'blob IDs'
 		$contentHtml = preg_replace_callback(
 			//'#(?<=")[A-Z2-7]{32}(?=")#', // Match any blob ID surrounded by double-quotes
-			'#(?<=[\W])[A-Z2-7]{32}(?=[\W])#', // Match a blob ID surrounded by any non-word chars
+			'#(?<!\w)[A-Z2-7]{32}(?!\w)#', // Match a blob ID surrounded by anything other than word chars
 			array($linkMaker,'base32Sha1HtmlBrowseLinkReplacementCallback'),
 			$contentHtml
 		);
