@@ -38,7 +38,7 @@ class TOGoS_PHPN2R_LinkMaker {
 			}
 		} else {
 			return
-				$this->htmlLink($this->componentUrl('raw', $urn, $filenameHint), $text).' ['.
+				$this->htmlLink($this->componentUrl('raw', $urn, $filenameHint), $text).'['.
 				$this->htmlLink($this->componentUrl('browse', $urn, $filenameHint), 'browse').']';
 		}
 	}
