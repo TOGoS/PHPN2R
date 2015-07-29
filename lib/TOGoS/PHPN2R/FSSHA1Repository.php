@@ -17,6 +17,10 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		return null;
 	}
 	
+	public function __toString() {
+		return "FSSHA1Repository(".var_export($this->dir,true).")";
+	}
+	
 	public function getDir() {
 		return $this->dir;
 	}
