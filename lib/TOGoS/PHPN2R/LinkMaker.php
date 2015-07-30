@@ -49,4 +49,12 @@ class TOGoS_PHPN2R_LinkMaker {
 		$urn = "urn:sha1:".$matches[0];
 		return $this->serviceHtmlLinkForUrn( 'browse', $urn, null, $matches[0] );
 	}
+	public function genericBrowseLinkReplacementCallback( $matches ) {
+		$thing = $matches[0];
+		if( preg_match('/^[A-Z2-7]{32}$/', $thing) ) {
+			return $this->base32Sha1HtmlBrowseLinkReplacementCallback($matches);
+		} else {
+			return $this->urnHtmlLinkReplacementCallback($matches);
+		}
+	}
 }

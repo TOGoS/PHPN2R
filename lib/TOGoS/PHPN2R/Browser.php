@@ -85,16 +85,8 @@ class TOGoS_PHPN2R_Browser
 		// Since we're not using it in an attribute value, we can switch the quotes back:
 		$contentHtml = str_replace('&quot;','"',$contentHtml);
 		$contentHtml = preg_replace_callback(
-			'#(?:urn|(?:x-ccouch-head|x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)#',
-			array($linkMaker,'urnHtmlLinkReplacementCallback'), $contentHtml
-		);
-		// This replacement is useful when browing JSON documents that
-		// use base32-encoded SHA-1s (with no urn: prefix) as 'blob IDs'
-		$contentHtml = preg_replace_callback(
-			//'#(?<=")[A-Z2-7]{32}(?=")#', // Match any blob ID surrounded by double-quotes
-			'#\b[A-Z2-7]{32}\b#', // Match a blob ID surrounded by anything other than word chars
-			array($linkMaker,'base32Sha1HtmlBrowseLinkReplacementCallback'),
-			$contentHtml
+			'#(?:urn|(?:x-ccouch-head|x-parse-rdf|(?:(?:x-)?rdf-)?subject(?:-of)?)):(?:[A-Za-z0-9:_%+.-]+)|\b[A-Z2-7]{32}\b#',
+			array($linkMaker,'genericBrowseLinkReplacementCallback'), $contentHtml
 		);
 		return
 			"<pre>".
