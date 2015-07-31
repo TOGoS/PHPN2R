@@ -4,7 +4,7 @@
 	"license": "MIT",
 	"require": {
 		"php": ">=5.2",	
-		"ryprop/nife": "^0.2.0",
+		"ryprop/nife": "^0.2.5",
 		"togos/base32": "^1.0.1"
 	},
 	"require-dev": {
