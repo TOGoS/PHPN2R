@@ -132,6 +132,7 @@ class TOGoS_PHPN2R_Server {
 				'Date' => gmdate(self::HTTP_DATE_FORMAT, time()),
 				'Expires' => gmdate(self::HTTP_DATE_FORMAT, time() + (3600*24*365)),
 				'Cache-Control' => 'public',
+				'Access-Control-Allow-Origin' => '*',
 				'Content-Type' => $ct
 			);
 			if( $etag) $headers['ETag'] = "\"$etag\"";
