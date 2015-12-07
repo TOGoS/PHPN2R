@@ -114,13 +114,13 @@ class TOGoS_PHPN2R_Server {
 		return Nife_Util::httpResponse("404 Blob not found", "I coulnd't find $urn, bro.\n");
 	}
 	
-	public function serveBlob( $urn, $filenameHint=null ) {
+	public function serveBlob( $urn, $filenameHint=null, $typeOverride=null ) {
 		if( ($blob = $this->getBlob($urn)) ) {
-			$ct = null;
-			if( $blob instanceof Nife_FileBlob ) {
+			$ct = $typeOverride;
+			if( $ct === null and $blob instanceof Nife_FileBlob ) {
 				$ct = $this->guessFileType( $blob->getFile(), $filenameHint );
 			}
-			if( $ct == null ) $ct = 'application/octet-stream';
+			if( $ct === null ) $ct = 'application/octet-stream';
 
 			if( preg_match( '/^urn:(?:sha1|bitprint):([0-9A-Z]{32})/', $urn, $bif ) ) {
 				$etag = $bif[1];
@@ -154,6 +154,9 @@ class TOGoS_PHPN2R_Server {
 		}
 	}
 	
+	/**
+	 * @deprecated - this may all get moved into parseRequest.
+	 */
 	protected function extractParams($pathInfo, $method, $queryString) {
 		if( $pathInfo == '/N2R' ) {
 			return $queryString ? array(
@@ -162,19 +165,23 @@ class TOGoS_PHPN2R_Server {
 				'URN' => urldecode($queryString),
 				'filename hint' => null,
 				'root prefix' => '',
-				'error message' => null
+				'type override' => null,
 			) : array(
 				'service' => 'bad-request',
 				'error message' => 'No query string given'
 			);
 		} else if( preg_match( '#^ / (raw|browse) / ([^/]+) (?:/ (.*))? $#x', $pathInfo, $bif ) ) {
 			$fn = isset($bif[3]) ? $bif[3] : null;
+			$params = array();
+			if( $queryString ) parse_str($queryString, $params);
+			$typeOverride = isset($params['type']) ? $params['type'] : null;
 			return array(
 				'service' => $bif[1],
 				'method' => $method,
 				'URN' => urldecode($bif[2]),
 				'filename hint' => urldecode($fn),
-				'root prefix' => $fn === null ? '../' : '../../'
+				'root prefix' => $fn === null ? '../' : '../../',
+				'type override' => $typeOverride,
 			);
 		} else {
 			return array(
@@ -184,6 +191,9 @@ class TOGoS_PHPN2R_Server {
 		}
 	}
 	
+	/**
+	 * @deprecated - call handleRequest instead
+	 */
 	public function handleReekQuest( array $params ) {
 		if( $params['service'] == 'bad-request' ) {
 			return Nife_Util::httpResponse("404 Unrecognized path", $params['error message']);
@@ -191,15 +201,26 @@ class TOGoS_PHPN2R_Server {
 			if( $params['service'] == 'browse' ) {
 				return $this->browse($params['URN'], $params['filename hint'], $params['root prefix']);
 			} else {
-				return $this->serveBlob($params['URN'], $params['filename hint']);
+				return $this->serveBlob($params['URN'], $params['filename hint'], $params['type override']);
 			}
 		} else {
 			return Nife_Util::httpResponse("405 Method not allowed", "Method {$params['method']} not allowed");
 		}
 	}
 	
-	public function handleRequest( $pathInfo ) {
-		$params = $this->extractParams($pathInfo, $_SERVER['REQUEST_METHOD'], $_SERVER['QUERY_STRING']);
-		return $this->handleReekQuest($params);
+	public function parseRequest( $method, $pathInfo, $queryString='' ) {
+		return $this->extractParams( $pathInfo, $method, $queryString );
+	}
+	
+	public function handleRequest( $request ) {
+		if( is_string($request) ) {
+			$request = $this->parseRequest($_SERVER['REQUEST_METHOD'], $request, $_SERVER['QUERY_STRING']);
+		}
+		if( !is_array($request) ) {
+			throw new Exception(
+				"Argument to ".get_class($this)."#handleRequest must be a pathinfo ".
+				"string or request information array as returned by #parseRequest.");
+		}
+		return $this->handleReekQuest($request);
 	}
 }
