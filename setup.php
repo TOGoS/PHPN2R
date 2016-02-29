@@ -68,4 +68,4 @@ if( count($repos) == 0 ) {
 	exit;
 }
 
-return new TOGoS_PHPN2R_Server( $repos );
+return new TOGoS_PHPN2R_Server( $repos, $config );

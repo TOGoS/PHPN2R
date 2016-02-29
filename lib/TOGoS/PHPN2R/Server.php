@@ -2,9 +2,11 @@
 
 class TOGoS_PHPN2R_Server {
 	protected $repos;
+	protected $config;
 	
-	public function __construct( $repos ) {
+	public function __construct( $repos, $config=array() ) {
 		$this->repos = $repos;
+		$this->config = $config;
 	}
 	
 	protected $componentCache = array();
@@ -194,32 +196,76 @@ class TOGoS_PHPN2R_Server {
 	/**
 	 * @deprecated - call handleRequest instead
 	 */
-	public function handleReekQuest( array $params ) {
+	public function handleReekQuest( array $params, array $ctx=array() ) {
 		if( $params['service'] == 'bad-request' ) {
 			return Nife_Util::httpResponse("404 Unrecognized path", $params['error message']);
-		} else if( $params['method'] == 'GET' or $params['method'] == 'HEAD' ) {
+		}
+		
+		if( $params['method'] == 'GET' or $params['method'] == 'HEAD' ) {
 			if( $params['service'] == 'browse' ) {
 				return $this->browse($params['URN'], $params['filename hint'], $params['root prefix']);
 			} else {
 				return $this->serveBlob($params['URN'], $params['filename hint'], $params['type override']);
 			}
-		} else {
-			return Nife_Util::httpResponse("405 Method not allowed", "Method {$params['method']} not allowed");
 		}
+		
+		if( $params['method'] === 'PUT' and !empty($this->config['allow-uploads']) ) {
+			$allowed = false;
+			if( $this->config['allow-uploads'] === true ) {
+				$allowed = true;
+			} else if( $this->config['allow-uploads'] === 'for-authorized-users' ) {
+				//$allowed = !empty( username ); // wherever that comes from
+			}
+		}
+		
+		// Otherwise it's just not allowed at all
+		return Nife_Util::httpResponse("405 Method not allowed", "Method {$params['method']} not allowed");
 	}
 	
 	public function parseRequest( $method, $pathInfo, $queryString='' ) {
 		return $this->extractParams( $pathInfo, $method, $queryString );
 	}
 	
+	protected function authenticate( array $request ) {
+		if( !isset($request['pre-auth username']) ) {
+			// That's fine, they can be nobody!
+			unset($request['pre-auth username']);
+			unset($request['pre-auth password']);
+			return $request;
+		}
+		
+		if( !isset($this->config['users'][$request['pre-auth username']]) ) {
+			return false;
+		}
+		
+		$passhashes = $this->config['users'][$request['pre-auth username']]['passhashes'];
+		foreach( $passhashes as $ph ) {
+			if( password_verify($request['pre-auth password'], $ph) ) {
+				// Success!
+				$request['username'] = $request['pre-auth username'];
+				unset($request['pre-auth username']);
+				unset($request['pre-auth password']);
+				return $request;
+			}
+		}
+		
+		return false;
+	}
+	
 	public function handleRequest( $request ) {
 		if( is_string($request) ) {
 			$request = $this->parseRequest($_SERVER['REQUEST_METHOD'], $request, $_SERVER['QUERY_STRING']);
+			$request['pre-auth username'] = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null;
+			$request['pre-auth password'] = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : null;
 		}
 		if( !is_array($request) ) {
 			throw new Exception(
 				"Argument to ".get_class($this)."#handleRequest must be a pathinfo ".
 				"string or request information array as returned by #parseRequest.");
+		}
+		$request = $this->authenticate($request);
+		if( $request === false ) {
+			return Nife_Util::httpResponse("401 Authentication Failed", "Bad username or password!");
 		}
 		return $this->handleReekQuest($request);
 	}
