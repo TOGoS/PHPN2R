@@ -4,6 +4,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 {
 	protected $dir;
 	public $tempFilenamePrefix = ".temp";
+	public $mkdirMode = 0755;
 	public $verifyRenames = true;
 	
 	public function __construct( $dir ) {
@@ -59,7 +60,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$dataDir = $this->dir.'/data';
 		$tempDir = "{$dataDir}/{$sector}";
 		$tempFile = "{$tempDir}/{$this->tempFilenamePrefix}-".rand(1000000,9999999).'-'.rand(1000000,9999999);
-		if( !is_dir($tempDir) ) mkdir($tempDir,0755,true);
+		if( !is_dir($tempDir) ) mkdir($tempDir, $this->mkdirMode, true);
 		return $tempFile;
 	}
 	
@@ -142,7 +143,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$dataDir = $this->dir.'/data';
 		$destDir = "$dataDir/$sector/$first2";
 		$destFile = "$destDir/$basename";
-		if( !is_dir($destDir) ) mkdir( $destDir, 0755, true );
+		if( !is_dir($destDir) ) mkdir( $destDir, $this->mkdirMode, true );
 		if( !is_dir($destDir) ) throw new Exception("Failed to create directory: $destDir");
 		if( !rename( $tempFile, $destFile ) ) {
 			throw new Exception("Failed to rename '$tempFile' to '$destFile'");
