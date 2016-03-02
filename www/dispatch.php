@@ -15,7 +15,7 @@
 // This helps make fatal errors more obvious.
 header('HTTP/1.0 500 Error By Default');
 
-$res = require 'setup.php';
+$res = require '../setup.php';
 
 if( !isset($_SERVER['PATH_INFO']) ) {
 	// Standalone router mode
