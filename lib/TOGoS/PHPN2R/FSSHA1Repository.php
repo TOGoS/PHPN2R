@@ -60,7 +60,11 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$dataDir = $this->dir.'/data';
 		$tempDir = "{$dataDir}/{$sector}";
 		$tempFile = "{$tempDir}/{$this->tempFilenamePrefix}-".rand(1000000,9999999).'-'.rand(1000000,9999999);
-		if( !is_dir($tempDir) ) mkdir($tempDir, $this->mkdirMode, true);
+		if( !is_dir($tempDir) ) {
+			if( @mkdir($tempDir, $this->mkdirMode, true) === false ) {
+				throw new Exception("Failed to mkdir {$tempDir}; might need to chmod 0777 it");
+			}
+		}
 		return $tempFile;
 	}
 	

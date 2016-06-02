@@ -3,5 +3,9 @@
 return array(
 	'repositories' => array(
 		'some-repository' => '/home/someone/.ccouch'
-	)
+	),
+	'allow-uploads' => false, // 'for-authorized-users' not yet implemented
+	'upload-repository' => 'some-repository',
+	'upload-sector' => 'user-content',
+	'allow-upload-sector-override' => false, // Allow override via like a X-CCouch-Sector: header or something
 );

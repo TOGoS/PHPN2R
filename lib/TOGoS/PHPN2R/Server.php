@@ -193,6 +193,38 @@ class TOGoS_PHPN2R_Server {
 		}
 	}
 	
+	protected function handleUpload( $urn ) {
+		if( !isset($this->config['upload-repository']) ) {
+			return Nife_Util::httpResponse(
+				"500 No upload-repository configured",
+				"Cannot handle uploads because 'upload-repository' is not configured.");
+		}
+		$repo = isset($this->repos[$this->config['upload-repository']]) ?
+				$this->repos[$this->config['upload-repository']] : null;
+		if( $repo === null ) {
+			return Nife_Util::httpResponse(
+				"500 upload repository misconfigured",
+				"Configured upload-repository, '{$this->config['upload-repository']}',\n".
+				"is not itself configured.");
+		}
+		if( !isset($this->config['upload-sector']) ) {
+			return Nife_Util::httpResponse(
+				"500 No upload-sector configured",
+				"Cannot handle uploads because 'upload-sector' is not configured.");
+		}
+		// TODO: Allow sector override if configured to
+		$inputStream = fopen('php://input', 'rb');
+		try {
+			$repo->putStream($inputStream, $this->config['upload-sector'], $urn);
+		} catch( TOGoS_PHPN2R_IdentifierFormatException $e ) {
+			return Nife_Util::httpResponse( "409 Unparseable URN", $e->getMessage()."\n" );
+		} catch( TOGoS_PHPN2R_HashMismatchException $e ) {
+			return Nife_Util::httpResponse( "409 Hash mismatch", $e->getMessage()."\n" );
+		}
+		if( $inputStream !== null ) @fclose($inputStream);
+		return Nife_Util::httpResponse( "204 Uploaded" );
+	}
+	
 	/**
 	 * @deprecated - call handleRequest instead
 	 */
@@ -215,6 +247,10 @@ class TOGoS_PHPN2R_Server {
 				$allowed = true;
 			} else if( $this->config['allow-uploads'] === 'for-authorized-users' ) {
 				//$allowed = !empty( username ); // wherever that comes from
+			}
+			
+			if( $allowed ) {
+				return $this->handleUpload( $params['URN'] );
 			}
 		}
 		

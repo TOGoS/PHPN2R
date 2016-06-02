@@ -59,8 +59,8 @@ if( $config === false ) {
 }
 
 $repos = array();
-foreach( $config['repositories'] as $repoPath ) {
-	$repos[] = new TOGoS_PHPN2R_FSSHA1Repository( $repoPath );
+foreach( $config['repositories'] as $name=>$repoPath ) {
+	$repos[$name] = new TOGoS_PHPN2R_FSSHA1Repository( $repoPath );
 }
 if( count($repos) == 0 ) {
 	send_error_headers("500 No repositories configured");
