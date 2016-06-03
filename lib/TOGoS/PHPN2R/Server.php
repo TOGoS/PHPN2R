@@ -112,8 +112,49 @@ class TOGoS_PHPN2R_Server {
 
 	const HTTP_DATE_FORMAT = "D, d M Y H:i:s e";
 	
+	static function combineHeader() {
+		$l = func_get_args();
+		$mix = array();
+		foreach( $l as $lz ) {
+			foreach( explode(', ', $lz) as $lzv ) {
+				$mix[$lzv] = $lzv;
+			}
+		}
+		return implode(', ', $mix);
+	}
+	
+	static function mixHeaders() {
+		$headers = array();
+		$l = func_get_args();
+		foreach( $l as $lh ) {
+			foreach( $lh as $k=>$v ) {
+				if( isset($headers[$k]) ) {
+					$headers[$k] = self::combineHeader($headers[$k], $v);
+				} else $headers[$k] = $v;
+			}
+		}
+		return $headers;
+	}
+	
+	protected function getConfiguredResponseHeaders( $headers=array() ) {
+		return isset($this->config['http-response-headers']) ?
+			$this->config['http-response-headers'] : array();
+	}
+	
+	protected function getRegularResponseHeaders() {
+		$headers = array();
+		$headers['access-control-allow-headers'] = 'x-ccouch-sector'; // Header's always allowed; we may ignore it.
+		return $headers;
+	}
+	
+	protected function httpResponse($status, $content=null, $headers=array() ) {
+		if( is_string($headers) ) $headers = array('content-type'=>$headers);
+		$headers = self::mixHeaders($headers, $this->getConfiguredResponseHeaders(), $this->getRegularResponseHeaders());
+		return Nife_Util::httpResponse($status, $content, $headers);
+	}
+	
 	protected function make404Response( $urn, $filenameHint ) {
-		return Nife_Util::httpResponse("404 Blob not found", "I coulnd't find $urn, bro.\n");
+		return $this->httpResponse("404 Blob not found", "I coulnd't find $urn, bro.\n");
 	}
 	
 	public function serveBlob( $urn, $filenameHint=null, $typeOverride=null ) {
@@ -138,7 +179,7 @@ class TOGoS_PHPN2R_Server {
 				'Content-Type' => $ct
 			);
 			if( $etag) $headers['ETag'] = "\"$etag\"";
-			return Nife_Util::httpResponse(
+			return $this->httpResponse(
 				200,
 				$blob,
 				$headers
@@ -195,20 +236,20 @@ class TOGoS_PHPN2R_Server {
 	
 	protected function handleUpload( $urn ) {
 		if( !isset($this->config['upload-repository']) ) {
-			return Nife_Util::httpResponse(
+			return $this->httpResponse(
 				"500 No upload-repository configured",
 				"Cannot handle uploads because 'upload-repository' is not configured.");
 		}
 		$repo = isset($this->repos[$this->config['upload-repository']]) ?
 				$this->repos[$this->config['upload-repository']] : null;
 		if( $repo === null ) {
-			return Nife_Util::httpResponse(
+			return $this->httpResponse(
 				"500 upload repository misconfigured",
 				"Configured upload-repository, '{$this->config['upload-repository']}',\n".
 				"is not itself configured.");
 		}
 		if( !isset($this->config['upload-sector']) ) {
-			return Nife_Util::httpResponse(
+			return $this->httpResponse(
 				"500 No upload-sector configured",
 				"Cannot handle uploads because 'upload-sector' is not configured.");
 		}
@@ -217,12 +258,28 @@ class TOGoS_PHPN2R_Server {
 		try {
 			$repo->putStream($inputStream, $this->config['upload-sector'], $urn);
 		} catch( TOGoS_PHPN2R_IdentifierFormatException $e ) {
-			return Nife_Util::httpResponse( "409 Unparseable URN", $e->getMessage()."\n" );
+			return $this->httpResponse( "409 Unparseable URN", $e->getMessage()."\n" );
 		} catch( TOGoS_PHPN2R_HashMismatchException $e ) {
-			return Nife_Util::httpResponse( "409 Hash mismatch", $e->getMessage()."\n" );
+			return $this->httpResponse( "409 Hash mismatch", $e->getMessage()."\n" );
 		}
 		if( $inputStream !== null ) @fclose($inputStream);
-		return Nife_Util::httpResponse( "204 Uploaded" );
+		return $this->httpResponse( "204 Uploaded" );
+	}
+	
+	protected function getAvailableMethodsForRaw() {
+		$methods = array('HEAD','GET','OPTIONS');
+		if( !empty($this->config['allow-uploads']) ) {
+			$methods[] = 'PUT';
+		}
+		return $methods;
+	}
+	
+	protected function optionsResponse( $methods ) {
+		return $this->httpResponse(
+			"200 Okay here are your methods",
+			"Available methods for this resource: ".implode(', ',$methods)."\n",
+			array('access-control-allow-methods' => implode(', ',$methods))
+		);
 	}
 	
 	/**
@@ -230,7 +287,18 @@ class TOGoS_PHPN2R_Server {
 	 */
 	public function handleReekQuest( array $params, array $ctx=array() ) {
 		if( $params['service'] == 'bad-request' ) {
-			return Nife_Util::httpResponse("404 Unrecognized path", $params['error message']);
+			return $this->httpResponse("404 Unrecognized path", $params['error message']);
+		}
+		
+		if( $params['method'] == 'OPTIONS' ) {
+			switch( $params['service'] ) {
+			case 'browse':
+				return $this->optionsResponse( array('HEAD','GET','OPTIONS') );
+			case 'raw':
+				return $this->optionsResponse( $this->getAvailableMethodsForRaw() );
+			default:
+				return $this->httpResponse("500 invalid service", "Invalid service, {$params['service']}");
+			}
 		}
 		
 		if( $params['method'] == 'GET' or $params['method'] == 'HEAD' ) {
@@ -255,7 +323,7 @@ class TOGoS_PHPN2R_Server {
 		}
 		
 		// Otherwise it's just not allowed at all
-		return Nife_Util::httpResponse("405 Method not allowed", "Method {$params['method']} not allowed");
+		return $this->httpResponse("405 Method not allowed", "Method {$params['method']} not allowed");
 	}
 	
 	public function parseRequest( $method, $pathInfo, $queryString='' ) {
@@ -301,7 +369,7 @@ class TOGoS_PHPN2R_Server {
 		}
 		$request = $this->authenticate($request);
 		if( $request === false ) {
-			return Nife_Util::httpResponse("401 Authentication Failed", "Bad username or password!");
+			return $this->httpResponse("401 Authentication Failed", "Bad username or password!");
 		}
 		return $this->handleReekQuest($request);
 	}
