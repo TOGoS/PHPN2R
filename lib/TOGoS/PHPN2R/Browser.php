@@ -18,11 +18,11 @@ class TOGoS_PHPN2R_Browser
 		case TOGoS_XMLRDFParser_RDF_Namespaces::RDF_DATA:
 			return $rdfObj->getDataValue();
 		case TOGoS_XMLRDFParser_RDF_Namespaces::RDF_COLLECTION:
-			$values = [];
+			$values = array();
 			foreach( $rdfObj->getItems() as $item ) $values[] = self::rdfObjectToValue($item);
 			return $values;
 		default:
-			$val = [];
+			$val = array();
 			if( ($uri = $rdfObj->getUri()) !== null ) {
 				$val['uri'] = $uri;
 			}
@@ -46,7 +46,7 @@ class TOGoS_PHPN2R_Browser
 			return "<p>An empty directory.</p>";
 		}
 		
-		$lines = [];
+		$lines = array();
 		$lines[] = "<table>";
 		$lines[] = "<tr><th>Filename</th><th></th><th></th><th>Size</th><th>Modified</th></tr>";
 		foreach( $dVal[self::CC_ENTRIES] as $entry ) {
@@ -107,7 +107,7 @@ class TOGoS_PHPN2R_Browser
 			$pageContent = "<p>This file is too big (> $browseSizeLimit bytes) to analyze.</p>\n";
 		} else {
 			$content = (string)$blob;
-			$sections = [];
+			$sections = array();
 			
 			if( preg_match('#<Directory xmlns="http://ns.nuke24.net/ContentCouch/"[^>]*>(.*)</Directory>\s*#s', $content, $bif) ) {
 				$sections[] = $this->browseRdfDirectory( $content, $linkMaker );
