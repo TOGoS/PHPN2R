@@ -40,14 +40,11 @@ class TOGoS_PHPN2R_GitRepository implements TOGoS_PHPN2R_Repository
 		throw new Exception(get_class($this).'#putStream not implemented');
 	}
 
-	public function putBlob(Nife_Blob $blob, $sector='uploaded', $expectedUrn=null) {
+	public function putBlob(Nife_Blob $blob, array $options=array()) {
 		$string = (string)$blob;
 		$hashedThing = "blob ".strlen($string)."\0".$string;
 		$hashHex = hash('sha1',$hashedThing,false);
 		$urn = "x-git-object:$hashHex";
-		if( $expectedUrn !== null and $expectedUrn !== $urn ) {
-			throw new HashMismatchException("Generated URN did not match expected: $urn != $expectedUrn");
-		}
 		$deflated = gzcompress($hashedThing); // Equivalent to Zlib::Deflate.deflate in Ruby.
 		$outputDir = "{$this->gitDir}/objects/".substr($hashHex,0,2);
 		if( !is_dir($outputDir) ) mkdir($outputDir,0755,true);

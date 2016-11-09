@@ -1,5 +1,26 @@
 <?php
 
+class TOGoS_PHPN2R_HashingBlobStreamWriter
+{
+	protected $stream;
+	protected $hashing;
+	public function __construct($stream, $hashing) {
+		$this->stream = $stream;
+		$this->hashing = $hashing;
+	}
+	public function write($chunk) {
+		fwrite($this->stream, $chunk);
+		hash_update( $this->hashing, $chunk );
+	}
+	public function __invoke($chunk) {
+		$this->write($chunk);
+	}
+	public function closeAndDigest() {
+		fclose($this->stream);
+		return hash_final($this->hashing, true);
+	}
+}
+
 class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 {
 	protected $dir;
@@ -234,5 +255,38 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		fclose($tempFw);
 		$this->insertTempFile($tempFile, $sector, $hash);
 		return self::sha1Urn($hash);
+	}
+	
+	public function putBlob( Nife_Blob $blob, array $options=array() ) {
+		$sector = isset($options[TOGoS_PHPN2R_Repository::OPT_SECTOR]) ?
+			$options[TOGoS_PHPN2R_Repository::OPT_SECTOR] : null;
+		$expectedSha1 = isset($options[TOGoS_PHPN2R_Repository::OPT_EXPECTED_SHA1]) ?
+			$options[TOGoS_PHPN2R_Repository::OPT_EXPECTED_SHA1] : null;
+		if( $blob instanceof Nife_FileBlob && !empty($options[TOGoS_PHPN2R_Repository::OPT_ALLOW_SOURCE_REMOVAL]) ) {
+			$this->putTempFile( $blob->getFile(), $sector, $expectedUrn );
+		} else {
+			$tempFile = $this->tempFileInSector($sector);
+			$tempFw = fopen($tempFile,'wb');
+			if( $tempFw === null ) {
+				throw new Exception("Unable to open temp file '{$tempFile}' in 'wb' mode");
+			}
+			
+			$hash = hash_init('sha1');
+			$HBSW = new TOGoS_PHPN2R_HashingBlobStreamWriter($tempFw, $hash);
+			$blob->writeTo(array($HBSW,'write'));
+			$hash = $HBSW->closeAndDigest();
+			
+			if( $expectedSha1 !== null and $hash != $expectedSha1 ) {
+				unlink( $tempFile );
+				throw new TOGoS_PHPN2R_HashMismatchException(
+					"Hash of uploaded data does not match expected: ".
+					TOGoS_Base32::encode($hash)." != ".
+					TOGoS_Base32::encode($expectedSha1)
+				);
+			}
+			
+			$this->insertTempFile( $tempFile, $sector, $hash );
+			return self::sha1Urn($hash);
+		}
 	}
 }

@@ -20,4 +20,13 @@ interface TOGoS_PHPN2R_Repository
 	 * @return URN of the put stream
 	 */
 	public function putStream( $stream, $sector='uploaded', $expectedUrn=null );
+
+	/** Value names desired repository sector in which to store any new data */
+	const OPT_SECTOR = 'sector';
+	/** If true, implementation is free to move files instead of copying. */
+	const OPT_ALLOW_SOURCE_REMOVAL = 'allowSourceRemoval';
+	/** Value is the SHA-1 (20 bytes; not encoded) that the caller expects the blob to have. */
+	const OPT_EXPECTED_SHA1 = 'expectedSha1';
+	
+	public function putBlob( Nife_Blob $blob, array $options=array() );
 }

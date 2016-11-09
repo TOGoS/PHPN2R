@@ -27,6 +27,15 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends PHPUnit_Framework_TestCase
 		);
 	}
 	
+	public function testPutBlob() {
+		$this->assertEquals(
+			$this->helloWorldUrn,
+			$this->repo->putBlob(Nife_Util::blob($this->helloWorldText), array(
+				TOGoS_PHPN2R_Repository::OPT_SECTOR => 'blah',
+			))
+		);
+	}
+	
 	public function testPutTempFile() {
 		$this->assertEquals(
 			$this->helloWorldUrn,

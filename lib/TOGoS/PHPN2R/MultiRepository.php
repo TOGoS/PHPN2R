@@ -24,4 +24,11 @@ class TOGoS_PHPN2R_MultiRepository implements TOGoS_PHPN2R_Repository
 		}
 		return $this->primaryRepo->putStream($stream, $sector, $expectedUrn);
 	}
+	
+	public function putBlob( Nife_Blob $blob, array $options=array() ) {
+		if( $this->primaryRepo === null ) {
+			throw new Exception("Can't store; no primary repository");
+		}
+		return $this->primaryRepo->putBlob( $blob, $options );
+	}
 }

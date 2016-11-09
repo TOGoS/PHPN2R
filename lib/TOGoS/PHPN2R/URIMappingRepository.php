@@ -110,4 +110,8 @@ class TOGoS_PHPN2R_URIMappingRepository implements TOGoS_PHPN2R_Repository
 	public function putStream( $stream, $sector='uploaded', $expectedUrn=null ) {
 		return $this->backingRepo->putStream( $stream, $sector, $expectedUrn );
 	}
+
+	public function putBlob( Nife_Blob $blob, array $options=array() ) {
+		return $this->backingRepo->putBlob( $blob, $options );
+	}
 }
