@@ -263,7 +263,8 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$expectedSha1 = isset($options[TOGoS_PHPN2R_Repository::OPT_EXPECTED_SHA1]) ?
 			$options[TOGoS_PHPN2R_Repository::OPT_EXPECTED_SHA1] : null;
 		if( $blob instanceof Nife_FileBlob && !empty($options[TOGoS_PHPN2R_Repository::OPT_ALLOW_SOURCE_REMOVAL]) ) {
-			$this->putTempFile( $blob->getFile(), $sector, $expectedUrn );
+			$expectedUrn = $expectedSha1 ? self::sha1Urn($expectedSha1) : null;
+			return $this->putTempFile( $blob->getFile(), $sector, $expectedUrn );
 		} else {
 			$tempFile = $this->tempFileInSector($sector);
 			$tempFw = fopen($tempFile,'wb');

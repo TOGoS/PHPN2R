@@ -27,7 +27,32 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends PHPUnit_Framework_TestCase
 		);
 	}
 	
-	public function testPutBlob() {
+	public function testPutTempFileBlob() {
+		$tempFile = tempnam(sys_get_temp_dir(), 'tempfileblobtest');
+		file_put_contents($tempFile, $this->helloWorldText);
+		$this->assertEquals(
+			$this->helloWorldUrn,
+			$this->repo->putBlob(new Nife_FileBlob($tempFile), array(
+				TOGoS_PHPN2R_Repository::OPT_SECTOR => 'blah',
+				TOGoS_PHPN2R_Repository::OPT_ALLOW_SOURCE_REMOVAL => true,
+			))
+		);
+		$this->assertFalse( file_exists($tempFile), "Temp file should have been removed!");
+	}
+	
+	public function testPutNotSoTempFileBlob() {
+		$tempFile = tempnam(sys_get_temp_dir(), 'tempfileblobtest');
+		file_put_contents($tempFile, $this->helloWorldText);
+		$this->assertEquals(
+			$this->helloWorldUrn,
+			$this->repo->putBlob(new Nife_FileBlob($tempFile), array(
+				TOGoS_PHPN2R_Repository::OPT_SECTOR => 'blah',
+			))
+		);
+		$this->assertTrue( file_exists($tempFile), "Temp file should not have been removed!");
+	}
+
+	public function testPutStringBlob() {
 		$this->assertEquals(
 			$this->helloWorldUrn,
 			$this->repo->putBlob(Nife_Util::blob($this->helloWorldText), array(
