@@ -7,6 +7,7 @@ class TOGoS_PHPN2R_Browser
 	const CC_DIRECTORY= 'http://ns.nuke24.net/ContentCouch/Directory';
 	const CC_BLOB     = 'http://ns.nuke24.net/ContentCouch/Blob';
 	const CC_TARGET   = 'http://ns.nuke24.net/ContentCouch/target';
+	const CC_TARGET_TYPE = 'http://ns.nuke24.net/ContentCouch/targetType';
 	const CC_ENTRIES  = 'http://ns.nuke24.net/ContentCouch/entries';
 	const CC_FILESIZE = 'http://bitzi.com/xmlns/2002/01/bz-core#fileLength';
 	const CC_MODIFIED = 'http://purl.org/dc/terms/modified';
@@ -59,7 +60,16 @@ class TOGoS_PHPN2R_Browser
 				$defaultService = 'raw';
 			}
 			$name = $entry[self::CC_NAME];
-			$isDirectory = $target[self::RDF_TYPE]['uri'] === self::CC_DIRECTORY;
+			$targetTypeRef = null;
+			if( isset($target[self::RDF_TYPE]['uri']) ) {
+				$targetTypeRef = $target[self::RDF_TYPE]['uri'];
+			} else if( isset($entry[self::CC_TARGET_TYPE]) ) {
+				if( $entry[self::CC_TARGET_TYPE] == 'Directory' ) {
+					$targetTypeRef = self::CC_DIRECTORY;
+				}
+			}
+
+			$isDirectory = $targetTypeRef === self::CC_DIRECTORY;
 			$text = $name.($isDirectory ? '/' : '');
 			$modified = isset($entry[self::CC_MODIFIED]) ? $entry[self::CC_MODIFIED] : null;
 			$size = isset($target[self::CC_FILESIZE]) ? $target[self::CC_FILESIZE] : null;
