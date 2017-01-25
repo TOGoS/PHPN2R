@@ -19,7 +19,7 @@ interface TOGoS_PHPN2R_Repository
 	 *
 	 * @return URN of the put stream
 	 */
-	public function putStream( $stream, $sector='uploaded', $expectedUrn=null );
+	public function putStream( $stream, $sector=null, $expectedUrn=null );
 
 	/** Value names desired repository sector in which to store any new data */
 	const OPT_SECTOR = 'sector';

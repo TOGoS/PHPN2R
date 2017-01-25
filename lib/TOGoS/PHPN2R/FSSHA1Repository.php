@@ -27,6 +27,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	public $tempFilenamePrefix = ".temp";
 	public $mkdirMode = 0755;
 	public $verifyRenames = true;
+	public $defaultStoreSector = 'uploaded';
 	
 	public function __construct( $dir ) {
 		$this->dir = $dir;
@@ -179,7 +180,8 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		return $destFile;
 	}
 	
-	public function putTempFile( $tempFile, $sector='uploaded', $expectedSha1=null ) {
+	public function putTempFile( $tempFile, $sector=null, $expectedSha1=null ) {
+		if( $sector === null ) $sector = $this->defaultStoreSector;
 		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
 		
 		$tempFr = fopen($tempFile,'rb');
@@ -203,7 +205,8 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		return self::sha1Urn($hash);
 	}
 	
-	public function putStream( $stream, $sector='uploaded', $expectedSha1=null ) {
+	public function putStream( $stream, $sector=null, $expectedSha1=null ) {
+		if( $sector === null ) $sector = $this->defaultStoreSector;
 		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
 		
 		$tempFile = $this->tempFileInSector($sector);
@@ -234,7 +237,8 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		return self::sha1Urn($hash);
 	}
 	
-	public function putString( $data, $sector='uploaded', $expectedSha1=null ) {
+	public function putString( $data, $sector=null, $expectedSha1=null ) {
+		if( $sector === null ) $sector = $this->defaultStoreSector;
 		if( $expectedSha1 !== null) $expectedSha1 = self::extractSha1($expectedSha1);
 		
 		$hash = sha1($data, true);
@@ -259,7 +263,7 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 	
 	public function putBlob( Nife_Blob $blob, array $options=array() ) {
 		$sector = isset($options[TOGoS_PHPN2R_Repository::OPT_SECTOR]) ?
-			$options[TOGoS_PHPN2R_Repository::OPT_SECTOR] : null;
+			$options[TOGoS_PHPN2R_Repository::OPT_SECTOR] : $this->defaultStoreSector;
 		$expectedSha1 = isset($options[TOGoS_PHPN2R_Repository::OPT_EXPECTED_SHA1]) ?
 			$options[TOGoS_PHPN2R_Repository::OPT_EXPECTED_SHA1] : null;
 		if( $blob instanceof Nife_FileBlob && !empty($options[TOGoS_PHPN2R_Repository::OPT_ALLOW_SOURCE_REMOVAL]) ) {
