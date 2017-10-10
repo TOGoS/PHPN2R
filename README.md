@@ -16,6 +16,8 @@ to ``composer install``` to use PHPN2R by itself.
 
 ### Repository format
 
+See [ContentCouchRepositoryFormat](//github.com/TOGoS/ContentCouchRepositoryFormat).
+
 The repositories listed in config.php are assumed to be of the following format
 
 ```
