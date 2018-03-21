@@ -14,8 +14,10 @@ composer.lock: | composer.json
 
 vendor: composer.lock
 	composer install
+composer.lock: composer.json
+	composer install
 
 test-dependencies: vendor
 
 run-unit-tests: test-dependencies
-	vendor/bin/phpunit --bootstrap vendor/autoload.php test
+	vendor/bin/phpsimplertest --colorful-output --bootstrap vendor/autoload.php test

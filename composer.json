@@ -5,15 +5,20 @@
 	"require": {
 		"php": ">=5.2",	
 		"ryprop/nife": "^0.2.5",
-		"togos/base32": "^1.0.1"
+		"togos/base32": "^1.0.1",
+		"togos/simpler-test": "^1.1"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "^3.7.37",
 		"togos/xml-rdf-parser": "2.1.0"
 	},
 	"autoload": {
 		"psr-0": {
 			"TOGoS_PHPN2R_": "lib/"
+		}
+	},
+	"autoload-dev": {
+		"psr-0": {
+			"TOGoS_PHPN2R_": "test/"
 		}
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 
-class TOGoS_PHPN2R_CachingRepositoryTest extends PHPUnit_Framework_TestCase
+class TOGoS_PHPN2R_CachingRepositoryTest extends TOGoS_SimplerTest_TestCase
 {
 	protected $backingRepos;
 	protected $cachingRepo;

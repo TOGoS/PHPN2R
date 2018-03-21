@@ -1,6 +1,6 @@
 <?php
 
-class TOGoS_PHPN2R_FSSHA1RepositoryTest extends PHPUnit_Framework_TestCase
+class TOGoS_PHPN2R_FSSHA1RepositoryTest extends TOGoS_SimplerTest_TestCase
 {
 	public function setUp() {
 		$this->repo = new TOGoS_PHPN2R_FSSHA1Repository("/tmp/test-repo");

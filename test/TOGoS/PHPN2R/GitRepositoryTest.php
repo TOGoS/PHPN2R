@@ -1,6 +1,6 @@
 <?php
 
-class TOGoS_PHPN2R_GitRepositoryTest extends PHPUnit_Framework_TestCase
+class TOGoS_PHPN2R_GitRepositoryTest extends TOGoS_SimplerTest_TestCase
 {
 	protected $repo;
 	
