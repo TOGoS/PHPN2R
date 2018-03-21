@@ -19,6 +19,16 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends TOGoS_SimplerTest_TestCase
 	protected function newHelloWorldStream() {
 		return fopen($this->newHelloWorldTempFile(), "rb");
 	}
+
+	public function testTempFileWithOptions() {
+		$fiel = $this->repo->newTempFile(array(
+			TOGoS_PHPN2R_Repository::OPT_SECTOR => 'rigged',
+			'postfix' => '.orange',
+		));
+		$this->assertTrue( is_dir(dirname($fiel)), "Directory containing hypothetical temp file should exist" );
+		$this->assertTrue( preg_match('#/rigged/#', $fiel), "Temp file should be in a directory corresponding to the requested sector" );
+		$this->assertTrue( preg_match('#\.orange$#', $fiel), "Temp file name should end with the requested postfix" );
+	}
 	
 	public function testPutString() {
 		$this->assertEquals(

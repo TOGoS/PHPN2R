@@ -261,10 +261,21 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		return self::sha1Urn($hash);
 	}
 
+	/**
+	 * @api
+	 *
+	 * Returns the path to a temporary file
+	 * Doesn't necessarily actually create the file
+	 *
+	 * @param $options array of how do you want it?
+	 *   TOGoS_PHPN2R_Repository::OPT_SECTOR => name of sector in which to put the temp file
+	 *   'postfix' => would you like your filename to end with something?  Put that in here.
+	 */
 	public function newTempFile(array $options=array()) {
 		$sector = isset($options[TOGoS_PHPN2R_Repository::OPT_SECTOR]) ?
 			$options[TOGoS_PHPN2R_Repository::OPT_SECTOR] : $this->defaultStoreSector;
-		return $this->tempFileInSector($sector);
+		$postfix = isset($options['postfix']) ? $options['postfix'] : '';
+		return $this->tempFileInSector($sector) . $postfix;
 	}
 	
 	public function putBlob( Nife_Blob $blob, array $options=array() ) {
