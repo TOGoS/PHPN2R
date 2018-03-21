@@ -11,7 +11,7 @@ class TOGoS_PHPN2R_FSSHA1RepositoryTest extends TOGoS_SimplerTest_TestCase
 	}
 	
 	protected function newHelloWorldTempFile() {
-		$tempFile = tempnam("/tmp", "test-blob");
+		$tempFile = $this->repo->newTempFile();
 		file_put_contents($tempFile, $this->helloWorldText);
 		return $tempFile;
 	}

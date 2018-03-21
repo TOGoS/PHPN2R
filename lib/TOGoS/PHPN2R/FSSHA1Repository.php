@@ -260,6 +260,12 @@ class TOGoS_PHPN2R_FSSHA1Repository implements TOGoS_PHPN2R_Repository
 		$this->insertTempFile($tempFile, $sector, $hash);
 		return self::sha1Urn($hash);
 	}
+
+	public function newTempFile(array $options=array()) {
+		$sector = isset($options[TOGoS_PHPN2R_Repository::OPT_SECTOR]) ?
+			$options[TOGoS_PHPN2R_Repository::OPT_SECTOR] : $this->defaultStoreSector;
+		return $this->tempFileInSector($sector);
+	}
 	
 	public function putBlob( Nife_Blob $blob, array $options=array() ) {
 		$sector = isset($options[TOGoS_PHPN2R_Repository::OPT_SECTOR]) ?
