@@ -82,7 +82,7 @@ class TOGoS_PHPN2R_Browser
 				 ("<td></td></td></td>") :
 				 ("<td><a class=\"browse-link\" href=\"".htmlspecialchars($browseUrl)."\">b</a></td>".
 				  "<td><a class=\"magnet-link\" href=\"".htmlspecialchars($magnetUrl)."\"></a></td>")).
-				"<td>$size</td><td>".htmlspecialchars($modified)."</td>".
+				"<td align=\"right\">$size</td><td>".htmlspecialchars($modified)."</td>".
 				"</tr>";
 		}
 		$lines[] = "</table>";
