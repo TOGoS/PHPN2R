@@ -115,8 +115,10 @@ class TOGoS_PHPN2R_Browser
 		
 		if( $tooBig ) {
 			$pageContent = "<p>This file is too big (> $browseSizeLimit bytes) to analyze.</p>\n";
+			$calculatedUrn = null;
 		} else {
 			$content = (string)$blob;
+			$calculatedUrn = "urn:sha1:".TOGoS_Base32::encode(hash('sha1', $content, true));
 			$sections = array();
 			
 			if( preg_match('#<Directory xmlns="http://ns.nuke24.net/ContentCouch/"[^>]*>(.*)</Directory>\s*#s', $content, $bif) ) {
@@ -128,13 +130,22 @@ class TOGoS_PHPN2R_Browser
 			$pageContent = "<hr />\n".implode("\n\n<hr />\n\n", array_filter($sections));
 		}
 		
+		$headers = array();
+		
+		if( $blobSize !== null ) $headers[] = "$blobSize bytes";
+
 		$rawUrl = $rp . ($filenameHint === null ? 'N2R?'.$urn : 'raw/'.$urn.'/'.$filenameHint);
-		$links = array();
 		if($filenameHint) $links[] = $linkMaker->htmlLinkForUrn($urn,$filenameHint,'Raw');
-		$links[] = $linkMaker->rawHtmlLinkForUrn($urn,null,'N2R');
+		$headers[] = $linkMaker->rawHtmlLinkForUrn($urn,null,'N2R');
 		
 		$magnetIconUrl = $linkMaker->componentUrl('raw', self::MAGNET_ICON_URN, 'Magnet-icon.gif');
-		
+
+		if( $calculatedUrn !== null ) {
+			$headers[] = "<code title=\"Calculated URN\">".htmlspecialchars($calculatedUrn)."</code>";
+		}
+
+		$headerBlock = empty($headers) ? "" : "<p>".implode(' | ', $headers)."</p>\n\n";
+
 		$html =
 			"<html>\n".
 			"<head>\n".
@@ -148,7 +159,7 @@ class TOGoS_PHPN2R_Browser
 			"table td:nth-child(2n+2) { background-color: rgba(0,0,255,0.07); }\n".
 			"</style>\n".
 			"</head><body>\n".
-			"<p>$blobSize bytes | ".implode(' | ',$links)."</p>\n".
+			$headerBlock.
 			$pageContent.
 			"</body>\n</html>\n";
 		
