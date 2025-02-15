@@ -8,11 +8,15 @@ Can be used as a library or by itself.
 ## Installation as stand-alone script
 
 1. Check this project out to a directory under your document root called 'uri-res'.
-2. Copy config.php.example to config.php and edit it.
-3. That's it.
+2. If you feel like it, run `composer install`
+3. Copy config.php.example to config.php and edit it.
+4. Serve using your favorite web server (or `php -S localhost:1234 dispatch.php`)
 
-ext-lib contains classes from other libraries so that you don't need
-to ``composer install``` to use PHPN2R by itself.
+If `vendor/autoload.php` does not exist (because you did not run `composer install`),
+scripts will fall back to loading the included versions of the libraries from `ext-lib`.
+This way PHPN2R can continue to run on old computers with very old versions
+of PHP and composer isntalled, like that raspberry Pi 2B under the stairs that's been
+running the same old Raspbian since 2012.
 
 ### Repository format
 
