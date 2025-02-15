@@ -37,7 +37,8 @@ if( file_exists($composerAutoloadFile = __DIR__.'/vendor/autoload.php') ) {
 	require_once $composerAutoloadFile;
 } else {
 	// We can mostly get by without it.
-	function __autoload($className) {
+	
+	function PHPN2R_autoload($className) {
 		$libDirs = array( __DIR__.'/lib', __DIR__.'/ext-lib' );
 		foreach( $libDirs as $libDir ) {
 			$filename = $libDir.'/'.strtr($className, array('_'=>'/')).'.php';
@@ -47,6 +48,8 @@ if( file_exists($composerAutoloadFile = __DIR__.'/vendor/autoload.php') ) {
 			}
 		}
 	}
+	
+	spl_autoload_register('PHPN2R_autoload');
 }
 
 $config = include('config.php');
