@@ -58,6 +58,16 @@ if( $config === false ) {
 	exit;
 }
 
+// This is here mainly so that you can set max_execution_time to a high value
+// allowing streaming of long audio/video files.
+// TODO: Investigate repeated calls to set_time_limit while streaming
+// Nife_Blobs as an alternative and maybe safer option.
+if( isset($config['php-ini']) ) {
+	foreach( $config['php-ini'] as $k => $v ) {
+		ini_set($k, $v);
+	}
+}
+
 $repos = array();
 foreach( $config['repositories'] as $name=>$repoPath ) {
 	$repos[$name] = new TOGoS_PHPN2R_FSSHA1Repository( $repoPath );

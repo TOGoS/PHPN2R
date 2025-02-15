@@ -17,4 +17,10 @@ return array(
 		//   access-control-allow-methods: HEAD, GET, OPTIONS, DELETE
 		'access-control-allow-origin' => '*',
 	),
+	// Things to ini_set before serving the request
+	'php-ini' => array(
+		// May be useful to set this to a high value if serving large files.
+		// (Until/unless I find a better way to continuously reset the timeout while sending blobs.)
+		// 'max_execution_time' => 10800,
+	)
 );
