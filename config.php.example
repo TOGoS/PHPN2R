@@ -19,8 +19,12 @@ return array(
 	),
 	// Things to ini_set before serving the request
 	'php-ini' => array(
-		// May be useful to set this to a high value if serving large files.
-		// (Until/unless I find a better way to continuously reset the timeout while sending blobs.)
-		// 'max_execution_time' => 10800,
-	)
+		// Shouldn't need this if inter-chunk-timeout-reset is set to anything substantial
+		// 'max_execution_time' => 10,
+	),
+	// For sending large files, reset the timeout before each chunk sent.
+	// This may need to be kind of high to account for browsers (or proxies)
+	// buffering a lot and then failing to read more for a long time,
+	// e.g. when streaming audio/video files.
+	'inter-chunk-timeout-reset' => 300,
 );

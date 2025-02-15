@@ -2,5 +2,8 @@
 
 header('HTTP/1.0 500 Error By Default');
 
-$res = require 'setup.php';
-Nife_Util::outputResponse($res->handleRequest('/N2R'));
+$server = require 'setup.php';
+Nife_Util::outputResponse(
+	$server->handleRequest('/N2R'),
+	$server->makeOutputter()
+);

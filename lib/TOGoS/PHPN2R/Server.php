@@ -12,6 +12,8 @@ class TOGoS_PHPN2R_Server {
 	protected $componentCache = array();
 	
 	public function __get($thing) {
+		if( $thing == 'interChunkTimeoutReset' ) return isset($this->config['inter-chunk-timeout-reset']) ? $this->config['inter-chunk-timeout-reset'] : 10;
+		
 		if( isset($this->componentCache[$thing]) ) return $this->componentCache[$thing];
 		
 		$getMeth = 'get'.ucfirst($thing);
@@ -372,5 +374,9 @@ class TOGoS_PHPN2R_Server {
 			return $this->httpResponse("401 Authentication Failed", "Bad username or password!");
 		}
 		return $this->handleReekQuest($request);
+	}
+	
+	public function makeOutputter() {
+		return Nife_Util::makeTimeoutResettingOutputter($this->interChunkTimeoutReset);
 	}
 }
