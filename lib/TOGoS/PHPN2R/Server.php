@@ -12,19 +12,19 @@ class TOGoS_PHPN2R_Server {
 	protected $componentCache = array();
 	
 	public function __get($thing) {
-	  if( isset($this->componentCache[$thing]) ) return $this->componentCache[$thing];
-	  
-	  $getMeth = 'get'.ucfirst($thing);
-	  if( method_exists($this,$getMeth) ) return $this->$getMeth();
-	  
-	  $loadMeth = 'load'.ucfirst($thing);
-	  if( method_exists($this,$loadMeth) ) return $this->componentCache[$thing] = $this->$loadMeth();
-	  
-	  if( class_exists($className = 'TOGoS_PHPN2R_'.ucfirst($thing)) ) {
-	    return $this->componentCache[$thing] = new $className($this);
-	  }
-	  
-	  throw new Exception(get_class($this)." doesn't have a #$thing.");
+		if( isset($this->componentCache[$thing]) ) return $this->componentCache[$thing];
+		
+		$getMeth = 'get'.ucfirst($thing);
+		if( method_exists($this,$getMeth) ) return $this->$getMeth();
+		
+		$loadMeth = 'load'.ucfirst($thing);
+		if( method_exists($this,$loadMeth) ) return $this->componentCache[$thing] = $this->$loadMeth();
+		
+		if( class_exists($className = 'TOGoS_PHPN2R_'.ucfirst($thing)) ) {
+			return $this->componentCache[$thing] = new $className($this);
+		}
+		
+		throw new Exception(get_class($this)." doesn't have a #$thing.");
 	}
 	
 	protected function guessFileType( $file, $filenameHint ) {
