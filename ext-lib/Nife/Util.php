@@ -16,6 +16,17 @@ class Nife_Util
 	}
 	
 	/**
+	 * This function is intended for use by blobs to implement
+	 * __toString when there is no obviously more straightforward or
+	 * efficient way.
+	 */
+	public static function stringifyBlob( Nife_Blob $blob ) {
+		$c = new Nife_Collector();
+		$blob->writeTo($c);
+		return (string)$c;
+	}
+	
+	/**
 	 * Return default status text for a status code.
 	 * If you don't like these, pass status text explicitly.
 	 */
@@ -34,10 +45,10 @@ class Nife_Util
 	/**
 	 * Convenience method for creating an HTTP Response.
 	 * @param $status status code or "<code> <text>" string
-	 * @param $content string or Blob representing response content
+	 * @param $content string or Blob representing response content; null for body-less responses
 	 * @param $typeOrHeaders string containing value of content-type header, or array of headers
 	 */
-	public static function httpResponse( $status, $content, $typeOrHeaders='text/plain; charset=utf-8' ) {
+	public static function httpResponse( $status, $content=null, $typeOrHeaders=null ) {
 		if( is_int($status) ) {
 			$statusCode = $status;
 			$statusText = self::statusCodeText($statusCode); // 
@@ -48,7 +59,15 @@ class Nife_Util
 			throw new Exception("Status must be an integer or '<code> <text>' string; got ".var_export($status,true));
 		}
 		
-		$content = self::blob($content);
+		$content = $content === null ? null : self::blob($content);
+		
+		if( $typeOrHeaders === null ) {
+			if( $content ) {
+				$typeOrHeaders = array('content-type' => 'text/plain; charset=utf-8');
+			} else {
+				$typeOrHeaders = array();
+			}
+		}
 		
 		if( is_array($typeOrHeaders) ) {
 			$headers = $typeOrHeaders;			
@@ -61,17 +80,40 @@ class Nife_Util
 		return new Nife_HTTP_BasicResponse($statusCode, $statusText, $headers, $content);
 	}
 	
+	/** @api */
 	public static function output( $thing ) {
 		if( is_scalar($thing) ) {
 			echo $thing;
 		} else if( $thing instanceof Nife_Blob ) {
 			$thing->writeTo( array('Nife_Util','output') );
+		} else if( $thing instanceof Nife_HTTP_Response ) {
+			self::outputResponse($thing);
 		} else {
 			throw new Exception("Don't know how to write ".var_export($thing,true)." to output.");
 		}
 	}
 	
-	public static function outputResponse( Nife_HTTP_Response $res ) {
+	/**
+	 * Returns an output function that simply echoes whatever is fed to it.
+	 * @api
+	 */
+	public static function getEchoFunction() {
+		return array('Nife_Util','output');
+	}
+	
+	/**
+	 * Returns true if the functon provided is the echo function.
+	 * This may be useful when implementing blobs that would
+	 * otherwise need to use output buffering to collect output
+	 * before sending it elsewhere.
+	 * @api
+	 */
+	public static function isEchoFunction( $f ) {
+		return self::getEchoFunction() == $f;
+	}
+
+	/** @api */
+	public static function outputResponse( Nife_HTTP_Response $res, $outputter=array('Nife_Util', 'output') ) {
 		$statusLine = $res->getStatusCode()." ".$res->getStatusText();
 		header( "HTTP/1.0 $statusLine" );
 		header( "Status: $statusLine" );
@@ -82,9 +124,18 @@ class Nife_Util
 			header("$k: $v");
 		}
 		$content = $res->getContent();
-		if( ($contentLength = $content->getLength()) !== null ) {
-			header("Content-Length: $contentLength");
+		if( $content !== null ) {
+			if( ($contentLength = $content->getLength()) !== null ) {
+				header("Content-Length: $contentLength");
+			}
+			call_user_func($outputter, $content);
 		}
-		self::output($content);
+	}
+
+	public static function makeTimeoutResettingOutputter($timeout=10, $outputter=array('Nife_Util', 'output')) {
+		return new Nife_Util_TeeOutputter(array(
+			new Nife_Util_TimeoutResetter(array('timeout'=>$timeout)),
+			$outputter
+		));
 	}
 }
