@@ -1,13 +1,13 @@
 # PHPN2R
 
 Serves blobs identified by urn:sha1 and urn:bitprint URNs via the
-/uri-res/N2R?(URN) convention (see [RFC 2169](https://www.ietf.org/rfc/rfc2169.txt)).
+`/uri-res/N2R?`+(URN) convention (see [RFC 2169](https://www.ietf.org/rfc/rfc2169.txt)).
 
 Can be used as a library or by itself.
 
 ## Installation as stand-alone script
 
-1. Check this project out to a directory under your document root called 'uri-res'.
+1. Check this project out to a directory under your document root called `uri-res`.
 2. If you feel like it, run `composer install`
 3. Copy config.php.example to config.php and edit it.
 4. Serve using your favorite web server (or `php -S localhost:1234 dispatch.php`)
