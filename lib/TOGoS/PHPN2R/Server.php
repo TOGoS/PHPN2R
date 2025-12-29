@@ -30,6 +30,8 @@ class TOGoS_PHPN2R_Server {
 	}
 	
 	protected function guessFileType( $file, $filenameHint ) {
+		if( $filenameHint === null ) $filenameHint = '';
+		
 		if( preg_match('/.ogg$/',$filenameHint) ) {
 			// finfo will report the skeleton type, application/ogg :(
 			return 'audio/ogg';
